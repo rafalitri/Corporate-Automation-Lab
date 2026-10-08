@@ -13,7 +13,8 @@ while (ejecutando)
     Console.WriteLine("2. Ver tareas");
     Console.WriteLine("3. Buscar tarea por ID");
     Console.WriteLine("4. Ver tareas pendientes");
-    Console.WriteLine("5. Salir");
+    Console.WriteLine("5. Completar tarea");
+    Console.WriteLine("6. Salir");
     Console.Write("Selecciona una opción: ");
 
     string opcion = Console.ReadLine() ?? "";
@@ -72,6 +73,33 @@ while (ejecutando)
             break;
 
         case "5":
+            Console.Write("Escribe el ID de la tarea que quieres completar: ");
+            string textoIdCompletar = Console.ReadLine() ?? "";
+
+            if (int.TryParse(textoIdCompletar, out int idCompletar))
+            {
+                bool completada = CompletarTarea(
+                    tareasEmpresa,
+                    idCompletar
+                );
+
+                if (completada)
+                {
+                    Console.WriteLine("Tarea completada correctamente.");
+                }
+                else
+                {
+                    Console.WriteLine("No existe una tarea con ese ID.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("El ID debe ser un número.");
+            }
+
+            break;
+
+        case "6":
             ejecutando = false;
             Console.WriteLine("Saliendo del programa...");
             break;
@@ -150,4 +178,18 @@ static int ContarTareasPendientes(List<Tarea> tareas)
     }
 
     return cantidad;
+}
+
+static bool CompletarTarea(List<Tarea> tareas, int id)
+{
+    Tarea? tarea = BuscarTareaPorId(tareas, id);
+
+    if (tarea is null)
+    {
+        return false;
+    }
+
+    tarea.Estado = "Completada";
+
+    return true;
 }
