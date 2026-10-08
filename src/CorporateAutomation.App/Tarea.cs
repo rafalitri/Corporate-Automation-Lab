@@ -6,7 +6,7 @@ public class Tarea
 
     public string Nombre { get; set; } = "";
 
-    public string Estado { get; set; } = "";
+    public EstadoTarea Estado { get; set; }
 
-    public string Prioridad { get; set; } = "";
+    public PrioridadTarea Prioridad { get; set; }
 }

@@ -130,14 +130,44 @@ static Tarea CrearTarea(int id)
     Console.Write("Nombre de la tarea: ");
     string nombre = Console.ReadLine() ?? "";
 
-    Console.Write("Prioridad: ");
-    string prioridad = Console.ReadLine() ?? "";
+    PrioridadTarea prioridad;
+
+    while (true)
+    {
+        Console.WriteLine("Selecciona la prioridad:");
+        Console.WriteLine("1. Baja");
+        Console.WriteLine("2. Media");
+        Console.WriteLine("3. Alta");
+        Console.Write("Opción: ");
+
+        string opcionPrioridad = Console.ReadLine() ?? "";
+
+        if (opcionPrioridad == "1")
+        {
+            prioridad = PrioridadTarea.Baja;
+            break;
+        }
+        else if (opcionPrioridad == "2")
+        {
+            prioridad = PrioridadTarea.Media;
+            break;
+        }
+        else if (opcionPrioridad == "3")
+        {
+            prioridad = PrioridadTarea.Alta;
+            break;
+        }
+        else
+        {
+            Console.WriteLine("Prioridad incorrecta.");
+        }
+    }
 
     Tarea nuevaTarea = new()
     {
         Id = id,
         Nombre = nombre,
-        Estado = "Pendiente",
+        Estado = EstadoTarea.Pendiente,
         Prioridad = prioridad
     };
 
