@@ -15,8 +15,8 @@ public class TareaServiceTests
             {
                 Id = 1,
                 Nombre = "Revisar servidor",
-                Estado = "Pendiente",
-                Prioridad = "Alta"
+                Estado = EstadoTarea.Pendiente,
+                Prioridad = PrioridadTarea.Alta
             }
         };
 
@@ -38,8 +38,8 @@ public class TareaServiceTests
             {
                 Id = 1,
                 Nombre = "Revisar servidor",
-                Estado = "Pendiente",
-                Prioridad = "Alta"
+                Estado = EstadoTarea.Pendiente,
+                Prioridad = PrioridadTarea.Alta
             }
         };
 
@@ -60,24 +60,24 @@ public class TareaServiceTests
             {
                 Id = 1,
                 Nombre = "Tarea 1",
-                Estado = "Pendiente",
-                Prioridad = "Alta"
+                Estado = EstadoTarea.Pendiente,
+                Prioridad = PrioridadTarea.Alta
             },
 
             new Tarea
             {
                 Id = 2,
                 Nombre = "Tarea 2",
-                Estado = "Pendiente",
-                Prioridad = "Media"
+                Estado = EstadoTarea.Pendiente,
+                Prioridad = PrioridadTarea.Media
             },
 
             new Tarea
             {
                 Id = 3,
                 Nombre = "Tarea 3",
-                Estado = "Completada",
-                Prioridad = "Baja"
+                Estado = EstadoTarea.Completada,
+                Prioridad = PrioridadTarea.Baja
             }
         };
 
@@ -98,15 +98,18 @@ public class TareaServiceTests
             {
                 Id = 1,
                 Nombre = "Revisar servidor",
-                Estado = "Pendiente",
-                Prioridad = "Alta"
+                Estado = EstadoTarea.Pendiente,
+                Prioridad = PrioridadTarea.Alta
             }
         };
 
         bool resultado = servicio.CompletarTarea(tareas, 1);
 
         Assert.True(resultado);
-        Assert.Equal("Completada", tareas[0].Estado);
+        Assert.Equal(
+            EstadoTarea.Completada,
+            tareas[0].Estado
+        );
     }
 
 
@@ -121,14 +124,17 @@ public class TareaServiceTests
             {
                 Id = 1,
                 Nombre = "Revisar servidor",
-                Estado = "Pendiente",
-                Prioridad = "Alta"
+                Estado = EstadoTarea.Pendiente,
+                Prioridad = PrioridadTarea.Alta
             }
         };
 
         bool resultado = servicio.CompletarTarea(tareas, 99);
 
         Assert.False(resultado);
-        Assert.Equal("Pendiente", tareas[0].Estado);
+        Assert.Equal(
+            EstadoTarea.Pendiente,
+            tareas[0].Estado
+        );
     }
 }

@@ -21,7 +21,7 @@ public class TareaService
 
         foreach (Tarea tarea in tareas)
         {
-            if (tarea.Estado == "Pendiente")
+            if (tarea.Estado == EstadoTarea.Pendiente)
             {
                 cantidad++;
             }
@@ -39,7 +39,7 @@ public class TareaService
             return false;
         }
 
-        tarea.Estado = "Completada";
+        tarea.Estado = EstadoTarea.Completada;
 
         return true;
     }
