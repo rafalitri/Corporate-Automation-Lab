@@ -2,6 +2,8 @@
 
 List<Tarea> tareasEmpresa = new();
 
+TareaService servicio = new();
+
 int siguienteId = 1;
 bool ejecutando = true;
 
@@ -40,7 +42,7 @@ while (ejecutando)
 
             if (int.TryParse(textoId, out int idBuscado))
             {
-                Tarea? tareaEncontrada = BuscarTareaPorId(
+                Tarea? tareaEncontrada = servicio.BuscarTareaPorId(
                     tareasEmpresa,
                     idBuscado
                 );
@@ -67,29 +69,41 @@ while (ejecutando)
             break;
 
         case "4":
-            int pendientes = ContarTareasPendientes(tareasEmpresa);
+            int pendientes = servicio.ContarTareasPendientes(
+                tareasEmpresa
+            );
 
             Console.WriteLine($"Tareas pendientes: {pendientes}");
             break;
 
         case "5":
-            Console.Write("Escribe el ID de la tarea que quieres completar: ");
+            Console.Write(
+                "Escribe el ID de la tarea que quieres completar: "
+            );
+
             string textoIdCompletar = Console.ReadLine() ?? "";
 
-            if (int.TryParse(textoIdCompletar, out int idCompletar))
+            if (int.TryParse(
+                textoIdCompletar,
+                out int idCompletar
+            ))
             {
-                bool completada = CompletarTarea(
+                bool completada = servicio.CompletarTarea(
                     tareasEmpresa,
                     idCompletar
                 );
 
                 if (completada)
                 {
-                    Console.WriteLine("Tarea completada correctamente.");
+                    Console.WriteLine(
+                        "Tarea completada correctamente."
+                    );
                 }
                 else
                 {
-                    Console.WriteLine("No existe una tarea con ese ID.");
+                    Console.WriteLine(
+                        "No existe una tarea con ese ID."
+                    );
                 }
             }
             else
@@ -145,51 +159,8 @@ static void MostrarTareas(List<Tarea> tareas)
     foreach (Tarea tarea in tareas)
     {
         Console.WriteLine(
-            $"{tarea.Id} - {tarea.Nombre} - {tarea.Estado} - {tarea.Prioridad}"
+            $"{tarea.Id} - {tarea.Nombre} - " +
+            $"{tarea.Estado} - {tarea.Prioridad}"
         );
     }
-}
-
-
-static Tarea? BuscarTareaPorId(List<Tarea> tareas, int id)
-{
-    foreach (Tarea tarea in tareas)
-    {
-        if (tarea.Id == id)
-        {
-            return tarea;
-        }
-    }
-
-    return null;
-}
-
-
-static int ContarTareasPendientes(List<Tarea> tareas)
-{
-    int cantidad = 0;
-
-    foreach (Tarea tarea in tareas)
-    {
-        if (tarea.Estado == "Pendiente")
-        {
-            cantidad++;
-        }
-    }
-
-    return cantidad;
-}
-
-static bool CompletarTarea(List<Tarea> tareas, int id)
-{
-    Tarea? tarea = BuscarTareaPorId(tareas, id);
-
-    if (tarea is null)
-    {
-        return false;
-    }
-
-    tarea.Estado = "Completada";
-
-    return true;
 }
