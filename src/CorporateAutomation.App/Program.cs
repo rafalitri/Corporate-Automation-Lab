@@ -1,10 +1,11 @@
 ﻿using CorporateAutomation.App;
 
-List<Tarea> tareasEmpresa = new();
+using CorporateAutomationContext db = new();
+
+List<Tarea> tareasEmpresa = db.Tareas.ToList();
 
 TareaService servicio = new();
 
-int siguienteId = 1;
 bool ejecutando = true;
 
 while (ejecutando)
@@ -24,10 +25,12 @@ while (ejecutando)
     switch (opcion)
     {
         case "1":
-            Tarea nuevaTarea = CrearTarea(siguienteId);
+            Tarea nuevaTarea = CrearTarea();
+
+            db.Tareas.Add(nuevaTarea);
+            db.SaveChanges();
 
             tareasEmpresa.Add(nuevaTarea);
-            siguienteId++;
 
             Console.WriteLine("Tarea creada correctamente.");
             break;
@@ -95,10 +98,13 @@ while (ejecutando)
 
                 if (completada)
                 {
+                    db.SaveChanges();
+
                     Console.WriteLine(
                         "Tarea completada correctamente."
                     );
                 }
+
                 else
                 {
                     Console.WriteLine(
@@ -125,7 +131,7 @@ while (ejecutando)
 }
 
 
-static Tarea CrearTarea(int id)
+static Tarea CrearTarea()
 {
     Console.Write("Nombre de la tarea: ");
     string nombre = Console.ReadLine() ?? "";
@@ -165,7 +171,6 @@ static Tarea CrearTarea(int id)
 
     Tarea nuevaTarea = new()
     {
-        Id = id,
         Nombre = nombre,
         Estado = EstadoTarea.Pendiente,
         Prioridad = prioridad
