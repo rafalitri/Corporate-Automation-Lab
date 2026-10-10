@@ -74,4 +74,21 @@ public class TareasController : ControllerBase
 
         return Ok(tarea);
     }
+    [HttpDelete("{id:int}")]
+    public IActionResult Delete(int id)
+    {
+        using CorporateAutomationContext db = new();
+
+        Tarea? tarea = db.Tareas.Find(id);
+
+        if (tarea is null)
+        {
+            return NotFound();
+        }
+
+        db.Tareas.Remove(tarea);
+        db.SaveChanges();
+
+        return NoContent();
+    }
 }
