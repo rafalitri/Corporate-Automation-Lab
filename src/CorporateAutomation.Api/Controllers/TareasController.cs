@@ -51,4 +51,27 @@ public class TareasController : ControllerBase
 
         return Ok(nuevaTarea);
     }
+    [HttpPut("{id:int}")]
+    public ActionResult<Tarea> Put(
+    int id,
+    ActualizarTareaRequest request
+)
+    {
+        using CorporateAutomationContext db = new();
+
+        Tarea? tarea = db.Tareas.Find(id);
+
+        if (tarea is null)
+        {
+            return NotFound();
+        }
+
+        tarea.Nombre = request.Nombre;
+        tarea.Estado = request.Estado;
+        tarea.Prioridad = request.Prioridad;
+
+        db.SaveChanges();
+
+        return Ok(tarea);
+    }
 }
