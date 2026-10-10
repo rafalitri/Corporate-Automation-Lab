@@ -18,6 +18,22 @@ public class TareasController : ControllerBase
     }
 
 
+    [HttpGet("{id:int}")]
+    public ActionResult<Tarea> GetById(int id)
+    {
+        using CorporateAutomationContext db = new();
+
+        Tarea? tarea = db.Tareas.Find(id);
+
+        if (tarea is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(tarea);
+    }
+
+
     [HttpPost]
     public ActionResult<Tarea> Post(CrearTareaRequest request)
     {
