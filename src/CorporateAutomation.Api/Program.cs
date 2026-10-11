@@ -1,8 +1,19 @@
+using CorporateAutomation.App;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+string connectionString =
+    builder.Configuration.GetConnectionString("CorporateAutomation")
+    ?? throw new InvalidOperationException(
+        "No se encontró la cadena de conexión."
+    );
+
+builder.Services.AddDbContext<CorporateAutomationContext>(
+    options =>
+        options.UseSqlServer(connectionString)
+);
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -11,12 +22,11 @@ builder.Services.AddControllers()
             new JsonStringEnumConverter()
         );
     });
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

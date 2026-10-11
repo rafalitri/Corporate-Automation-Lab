@@ -7,12 +7,18 @@ namespace CorporateAutomation.Api.Controllers;
 [Route("api/[controller]")]
 public class TareasController : ControllerBase
 {
+    private readonly CorporateAutomationContext _db;
+
+    public TareasController(CorporateAutomationContext db)
+    {
+        _db = db;
+    }
+
+
     [HttpGet]
     public ActionResult<List<Tarea>> Get()
     {
-        using CorporateAutomationContext db = new();
-
-        List<Tarea> tareas = db.Tareas.ToList();
+        List<Tarea> tareas = _db.Tareas.ToList();
 
         return Ok(tareas);
     }
@@ -21,9 +27,7 @@ public class TareasController : ControllerBase
     [HttpGet("{id:int}")]
     public ActionResult<Tarea> GetById(int id)
     {
-        using CorporateAutomationContext db = new();
-
-        Tarea? tarea = db.Tareas.Find(id);
+        Tarea? tarea = _db.Tareas.Find(id);
 
         if (tarea is null)
         {
@@ -37,8 +41,6 @@ public class TareasController : ControllerBase
     [HttpPost]
     public ActionResult<Tarea> Post(CrearTareaRequest request)
     {
-        using CorporateAutomationContext db = new();
-
         Tarea nuevaTarea = new()
         {
             Nombre = request.Nombre,
@@ -46,20 +48,20 @@ public class TareasController : ControllerBase
             Prioridad = request.Prioridad
         };
 
-        db.Tareas.Add(nuevaTarea);
-        db.SaveChanges();
+        _db.Tareas.Add(nuevaTarea);
+        _db.SaveChanges();
 
         return Ok(nuevaTarea);
     }
+
+
     [HttpPut("{id:int}")]
     public ActionResult<Tarea> Put(
-    int id,
-    ActualizarTareaRequest request
-)
+        int id,
+        ActualizarTareaRequest request
+    )
     {
-        using CorporateAutomationContext db = new();
-
-        Tarea? tarea = db.Tareas.Find(id);
+        Tarea? tarea = _db.Tareas.Find(id);
 
         if (tarea is null)
         {
@@ -70,24 +72,24 @@ public class TareasController : ControllerBase
         tarea.Estado = request.Estado;
         tarea.Prioridad = request.Prioridad;
 
-        db.SaveChanges();
+        _db.SaveChanges();
 
         return Ok(tarea);
     }
+
+
     [HttpDelete("{id:int}")]
     public IActionResult Delete(int id)
     {
-        using CorporateAutomationContext db = new();
-
-        Tarea? tarea = db.Tareas.Find(id);
+        Tarea? tarea = _db.Tareas.Find(id);
 
         if (tarea is null)
         {
             return NotFound();
         }
 
-        db.Tareas.Remove(tarea);
-        db.SaveChanges();
+        _db.Tareas.Remove(tarea);
+        _db.SaveChanges();
 
         return NoContent();
     }
