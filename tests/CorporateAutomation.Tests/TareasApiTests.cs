@@ -5,6 +5,7 @@ using CorporateAutomation.App;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using System.Text.Json;
 
 namespace CorporateAutomation.Tests;
 
@@ -69,9 +70,7 @@ public class TareasApiTests
 
         Assert.NotNull(response.Headers.Location);
 
-        var consulta = await client.GetAsync(
-            response.Headers.Location
-        );
+        var consulta = await client.GetAsync(response.Headers.Location);
 
         Assert.Equal(HttpStatusCode.OK, consulta.StatusCode);
 
@@ -82,20 +81,9 @@ public class TareasApiTests
 
         var tareaGuardada = Assert.Single(db.Tareas);
 
-        Assert.Equal(
-            "Revisar copias de seguridad",
-            tareaGuardada.Nombre
-        );
-
-        Assert.Equal(
-            PrioridadTarea.Alta,
-            tareaGuardada.Prioridad
-        );
-
-        Assert.Equal(
-            EstadoTarea.Pendiente,
-            tareaGuardada.Estado
-        );
+        Assert.Equal("Revisar copias de seguridad", tareaGuardada.Nombre);
+        Assert.Equal(PrioridadTarea.Alta, tareaGuardada.Prioridad);
+        Assert.Equal(EstadoTarea.Pendiente, tareaGuardada.Estado);
     }
 
     [Fact]
@@ -148,23 +136,11 @@ public class TareasApiTests
         var verificationDb = verificationScope.ServiceProvider
             .GetRequiredService<CorporateAutomationContext>();
 
-        var tareaActualizada = verificationDb.Tareas
-            .Single(t => t.Id == id);
+        var tareaActualizada = verificationDb.Tareas.Single(t => t.Id == id);
 
-        Assert.Equal(
-            "Tarea actualizada",
-            tareaActualizada.Nombre
-        );
-
-        Assert.Equal(
-            EstadoTarea.Completada,
-            tareaActualizada.Estado
-        );
-
-        Assert.Equal(
-            PrioridadTarea.Alta,
-            tareaActualizada.Prioridad
-        );
+        Assert.Equal("Tarea actualizada", tareaActualizada.Nombre);
+        Assert.Equal(EstadoTarea.Completada, tareaActualizada.Estado);
+        Assert.Equal(PrioridadTarea.Alta, tareaActualizada.Prioridad);
     }
 
     [Fact]
@@ -197,14 +173,9 @@ public class TareasApiTests
         }
 
         // Eliminamos mediante HTTP DELETE.
-        var response = await client.DeleteAsync(
-            $"/api/tareas/{id}"
-        );
+        var response = await client.DeleteAsync($"/api/tareas/{id}");
 
-        Assert.Equal(
-            HttpStatusCode.NoContent,
-            response.StatusCode
-        );
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         // Comprobamos que ya no existe.
         using var verificationScope = factory.Services.CreateScope();
@@ -212,8 +183,7 @@ public class TareasApiTests
         var verificationDb = verificationScope.ServiceProvider
             .GetRequiredService<CorporateAutomationContext>();
 
-        bool existe = verificationDb.Tareas
-            .Any(t => t.Id == id);
+        bool existe = verificationDb.Tareas.Any(t => t.Id == id);
 
         Assert.False(existe);
     }
@@ -239,10 +209,7 @@ public class TareasApiTests
         );
 
         // La API debe rechazar la petición.
-        Assert.Equal(
-            HttpStatusCode.BadRequest,
-            response.StatusCode
-        );
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         // Comprobamos que no se ha guardado ninguna tarea.
         using var scope = factory.Services.CreateScope();
@@ -252,6 +219,7 @@ public class TareasApiTests
 
         Assert.Empty(db.Tareas);
     }
+
 
     [Fact]
     public async Task PostTarea_SinPrioridad_Devuelve400()
@@ -272,10 +240,7 @@ public class TareasApiTests
             nuevaTarea
         );
 
-        Assert.Equal(
-            HttpStatusCode.BadRequest,
-            response.StatusCode
-        );
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         // No debe haberse guardado ninguna tarea.
         using var scope = factory.Services.CreateScope();
@@ -285,6 +250,7 @@ public class TareasApiTests
 
         Assert.Empty(db.Tareas);
     }
+
 
     [Fact]
     public async Task PutTarea_NombreVacio_Devuelve400()
@@ -328,10 +294,7 @@ public class TareasApiTests
             cambios
         );
 
-        Assert.Equal(
-            HttpStatusCode.BadRequest,
-            response.StatusCode
-        );
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         // Comprobamos que la tarea original no ha cambiado.
         using var verificationScope = factory.Services.CreateScope();
@@ -339,24 +302,13 @@ public class TareasApiTests
         var verificationDb = verificationScope.ServiceProvider
             .GetRequiredService<CorporateAutomationContext>();
 
-        var tareaGuardada = verificationDb.Tareas
-            .Single(t => t.Id == id);
+        var tareaGuardada = verificationDb.Tareas.Single(t => t.Id == id);
 
-        Assert.Equal(
-            "Actualizar servidores",
-            tareaGuardada.Nombre
-        );
-
-        Assert.Equal(
-            EstadoTarea.Pendiente,
-            tareaGuardada.Estado
-        );
-
-        Assert.Equal(
-            PrioridadTarea.Alta,
-            tareaGuardada.Prioridad
-        );
+        Assert.Equal("Actualizar servidores", tareaGuardada.Nombre);
+        Assert.Equal(EstadoTarea.Pendiente, tareaGuardada.Estado);
+        Assert.Equal(PrioridadTarea.Alta, tareaGuardada.Prioridad);
     }
+
 
     [Fact]
     public async Task PostTarea_PrioridadInvalida_Devuelve400()
@@ -366,7 +318,7 @@ public class TareasApiTests
 
         PrepararBaseDeDatos(factory);
 
-        // Intentamos crear una tarea con prioridad inexistente.
+        // Intentamos crear una tarea con una prioridad inexistente.
         var nuevaTarea = new
         {
             Nombre = "Revisar servidores",
@@ -378,10 +330,7 @@ public class TareasApiTests
             nuevaTarea
         );
 
-        Assert.Equal(
-            HttpStatusCode.BadRequest,
-            response.StatusCode
-        );
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         // Comprobamos que no se ha guardado ninguna tarea.
         using var scope = factory.Services.CreateScope();
@@ -391,6 +340,7 @@ public class TareasApiTests
 
         Assert.Empty(db.Tareas);
     }
+
 
     [Theory]
     [InlineData(999, 1)] // Estado inválido
@@ -438,10 +388,7 @@ public class TareasApiTests
             cambios
         );
 
-        Assert.Equal(
-            HttpStatusCode.BadRequest,
-            response.StatusCode
-        );
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
         // Verificamos que los datos originales siguen intactos.
         using var scopeVerificacion = factory.Services.CreateScope();
@@ -449,22 +396,82 @@ public class TareasApiTests
         var dbVerificacion = scopeVerificacion.ServiceProvider
             .GetRequiredService<CorporateAutomationContext>();
 
-        var tareaGuardada = dbVerificacion.Tareas
-            .Single(t => t.Id == id);
+        var tareaGuardada = dbVerificacion.Tareas.Single(t => t.Id == id);
 
-        Assert.Equal(
-            "Revisar servidores",
-            tareaGuardada.Nombre
-        );
-
-        Assert.Equal(
-            EstadoTarea.Pendiente,
-            tareaGuardada.Estado
-        );
-
-        Assert.Equal(
-            PrioridadTarea.Media,
-            tareaGuardada.Prioridad
-        );
+        Assert.Equal("Revisar servidores", tareaGuardada.Nombre);
+        Assert.Equal(EstadoTarea.Pendiente, tareaGuardada.Estado);
+        Assert.Equal(PrioridadTarea.Media, tareaGuardada.Prioridad);
     }
+
+
+    [Theory]
+    [InlineData("estado=Pendiente", "Pendiente alta|Pendiente baja")]
+    [InlineData("prioridad=Alta", "Pendiente alta|Completada alta")]
+    [InlineData("estado=Pendiente&prioridad=Alta", "Pendiente alta")]
+    public async Task GetTareas_FiltraPorEstadoYPrioridad(
+        string filtro,
+        string nombresEsperados)
+    {
+        using var factory = new TareasApiFactory();
+        using var client = factory.CreateClient();
+
+        PrepararBaseDeDatos(factory);
+
+        // Creamos tres tareas para comprobar los filtros.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider
+                .GetRequiredService<CorporateAutomationContext>();
+
+            db.Tareas.AddRange(
+                new Tarea
+                {
+                    Nombre = "Pendiente alta",
+                    Estado = EstadoTarea.Pendiente,
+                    Prioridad = PrioridadTarea.Alta
+                },
+                new Tarea
+                {
+                    Nombre = "Pendiente baja",
+                    Estado = EstadoTarea.Pendiente,
+                    Prioridad = PrioridadTarea.Baja
+                },
+                new Tarea
+                {
+                    Nombre = "Completada alta",
+                    Estado = EstadoTarea.Completada,
+                    Prioridad = PrioridadTarea.Alta
+                }
+            );
+
+            db.SaveChanges();
+        }
+
+        // Consultamos la API utilizando los filtros.
+        var response = await client.GetAsync(
+            $"/api/tareas?{filtro}"
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var resultado = await response.Content
+            .ReadFromJsonAsync<List<JsonElement>>();
+
+        Assert.NotNull(resultado);
+
+        // Comprobamos que devuelve exactamente las tareas esperadas.
+        string[] obtenidos = resultado
+            .Select(tarea => tarea.GetProperty("nombre").GetString()!)
+            .OrderBy(nombre => nombre)
+            .ToArray();
+
+        string[] esperados = nombresEsperados
+            .Split('|')
+            .OrderBy(nombre => nombre)
+            .ToArray();
+
+        Assert.Equal(esperados, obtenidos);
+    }
+
+
 }
