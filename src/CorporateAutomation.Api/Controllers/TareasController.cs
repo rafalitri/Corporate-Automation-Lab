@@ -21,9 +21,10 @@ public class TareasController : ControllerBase
     }
 
     // GET: api/tareas
-    // Permite filtrar por estado y prioridad.
-
+    // Listar tareas con filtros y paginacion.
     [HttpGet]
+    [ProducesResponseType(typeof(List<Tarea>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<List<Tarea>>> Get(
         [FromQuery] EstadoTarea? estado,
         [FromQuery] PrioridadTarea? prioridad,
@@ -31,7 +32,6 @@ public class TareasController : ControllerBase
         [FromQuery] int pagina = 1,
         [FromQuery] int tamanoPagina = 10)
     {
-        // Validamos que los parámetros sean correctos.
         if (pagina < 1 || tamanoPagina < 1 || tamanoPagina > 100)
         {
             return BadRequest(
@@ -64,12 +64,12 @@ public class TareasController : ControllerBase
             );
         }
 
-        // Informamos del total de tareas que cumplen los filtros.
+        // Obtener total de resultados.
         int total = await consulta.CountAsync(cancellationToken);
 
         Response.Headers["X-Total-Count"] = total.ToString();
 
-        // Ordenamos y obtenemos solamente la página solicitada.
+        // Aplicar orden y paginacion.
         List<Tarea> tareas = await consulta
             .OrderBy(tarea => tarea.Id)
             .Skip((int)salto)
@@ -79,9 +79,11 @@ public class TareasController : ControllerBase
         return Ok(tareas);
     }
 
-
     // GET: api/tareas/1
+    // Obtener una tarea por su identificador.
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(Tarea), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<Tarea>> GetById(
         int id,
         CancellationToken cancellationToken)
@@ -105,7 +107,10 @@ public class TareasController : ControllerBase
     }
 
     // POST: api/tareas
+    // Crear una nueva tarea.
     [HttpPost]
+    [ProducesResponseType(typeof(Tarea), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<Tarea>> Post(
         CrearTareaRequest request,
         CancellationToken cancellationToken)
@@ -134,7 +139,11 @@ public class TareasController : ControllerBase
     }
 
     // PUT: api/tareas/1
+    // Actualizar una tarea existente.
     [HttpPut("{id:int}")]
+    [ProducesResponseType(typeof(Tarea), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<Tarea>> Put(
         int id,
         ActualizarTareaRequest request,
@@ -170,7 +179,10 @@ public class TareasController : ControllerBase
     }
 
     // DELETE: api/tareas/1
+    // Eliminar una tarea existente.
     [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
         int id,
         CancellationToken cancellationToken)

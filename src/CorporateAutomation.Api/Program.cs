@@ -29,7 +29,22 @@ builder.Services.AddControllers()
         );
     });
 
-builder.Services.AddOpenApi();
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Info.Title = "Corporate Automation Lab API";
+
+        document.Info.Description =
+            "REST API for managing tasks using C# and .NET 10. " +
+            "Supports CRUD operations, filtering, pagination, " +
+            "SQL Server persistence, and automated testing.";
+
+        return Task.CompletedTask;
+    });
+});
+
 
 var app = builder.Build();
 
