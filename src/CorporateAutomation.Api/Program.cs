@@ -4,15 +4,20 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-string connectionString =
-    builder.Configuration.GetConnectionString("CorporateAutomation")
-    ?? throw new InvalidOperationException(
-        "No se encontró la cadena de conexión."
-    );
-
 builder.Services.AddDbContext<CorporateAutomationContext>(
-    options =>
-        options.UseSqlServer(connectionString)
+    (serviceProvider, options) =>
+    {
+        var configuration = serviceProvider
+            .GetRequiredService<IConfiguration>();
+
+        string connectionString =
+            configuration.GetConnectionString("CorporateAutomation")
+            ?? throw new InvalidOperationException(
+                "No se encontró la cadena de conexión."
+            );
+
+        options.UseSqlServer(connectionString);
+    }
 );
 
 builder.Services.AddControllers()
