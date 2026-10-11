@@ -2,7 +2,7 @@
 
 using CorporateAutomationContext db = new();
 
-List<Tarea> tareasEmpresa = db.Tareas.ToList();
+List<Tarea> tareasEmpresa = new();
 
 TareaService servicio = new();
 
@@ -10,6 +10,12 @@ bool ejecutando = true;
 
 while (ejecutando)
 {
+    // Descartar los objetos almacenados en memoria.
+    db.ChangeTracker.Clear();
+
+    // Consultar nuevamente SQL Server.
+    tareasEmpresa = db.Tareas.ToList();
+
     Console.WriteLine();
     Console.WriteLine("=== CORPORATE AUTOMATION ===");
     Console.WriteLine("1. Crear tarea");
