@@ -15,6 +15,8 @@ The project includes a console application and an ASP.NET Core Web API, both usi
 - SQLite (in-memory integration tests)
 - xUnit
 - Git & GitHub
+- GitHub Actions (CI)
+- .NET User Secrets (local development configuration)
 
 ## Features
 
@@ -25,11 +27,16 @@ The project includes a console application and an ASP.NET Core Web API, both usi
 - Request validation and HTTP error handling
 - Dependency injection for database access
 - Automated unit and integration tests
+- Automated builds and tests with GitHub Actions
+- Local database configuration outside the repository using User Secrets
 
 ## Project Structure
 
 ```text
 Corporate-Automation-Lab/
+├── .github/
+│   └── workflows/
+│       └── dotnet-tests.yml
 ├── src/
 │   ├── CorporateAutomation.App/
 │   └── CorporateAutomation.Api/
@@ -53,11 +60,11 @@ Corporate-Automation-Lab/
 - SQL Server Express with a `SQLEXPRESS` instance
 - Git
 
-The default configuration uses Windows authentication to connect to `.\SQLEXPRESS`.
+The examples below use Windows authentication with a local `.\SQLEXPRESS` SQL Server instance.
 
 ### Installation
 
-Clone the repository:
+Clone the repository and restore its dependencies:
 
 ```powershell
 git clone https://github.com/rafalitri/Corporate-Automation-Lab.git
@@ -65,19 +72,39 @@ cd Corporate-Automation-Lab
 dotnet restore
 ```
 
-Restore the local Entity Framework Core tool:
+### Configure Database Connection
+
+Both the console application and the Web API use .NET User Secrets to keep local database connection strings outside the Git repository.
+
+Configure the console application:
+
+```powershell
+dotnet user-secrets set "ConnectionStrings:CorporateAutomation" "Server=.\SQLEXPRESS;Database=CorporateAutomation;Trusted_Connection=True;TrustServerCertificate=True;" --project src/CorporateAutomation.App
+```
+
+Configure the Web API:
+
+```powershell
+dotnet user-secrets set "ConnectionStrings:CorporateAutomation" "Server=.\SQLEXPRESS;Database=CorporateAutomation;Trusted_Connection=True;TrustServerCertificate=True;" --project src/CorporateAutomation.Api
+```
+
+Replace `.\SQLEXPRESS` if your SQL Server instance has a different name. These commands are intended for local development with Windows authentication.
+
+`TrustServerCertificate=True` is intended for local development only. User Secrets are stored outside the repository, but they are **not encrypted** and are **not a production secrets manager**.
+
+### Database Migrations
+
+Restore the local Entity Framework Core CLI tool:
 
 ```powershell
 dotnet tool restore
 ```
 
-Create the database using the existing EF Core migration:
+Create or update the SQL Server database using the existing EF Core migration:
 
 ```powershell
 dotnet ef database update --project src/CorporateAutomation.App --startup-project src/CorporateAutomation.App
 ```
-
-If needed, adjust the connection string in `src/CorporateAutomation.Api/appsettings.json` and `src/CorporateAutomation.App/CorporateAutomationContext.cs` to match your local SQL Server instance.
 
 ### Run the Console Application
 
@@ -93,15 +120,13 @@ Trust the local HTTPS development certificate:
 dotnet dev-certs https --trust
 ```
 
-Start the API:
+Start the API using its HTTPS launch profile:
 
 ```powershell
 dotnet run --project src/CorporateAutomation.Api --launch-profile https
 ```
 
-API base URL:
-
-`https://localhost:7217/api/tareas`
+API base URL: `https://localhost:7217/api/tareas`
 
 ## API Endpoints
 
@@ -138,9 +163,11 @@ Run all automated tests:
 dotnet test
 ```
 
-The test suite includes unit tests for task-management logic and integration tests for API endpoints and request validation.
+The test suite contains 16 unit and integration tests covering task-management logic, API endpoints, and request validation.
 
-Integration tests use isolated SQLite in-memory databases instead of the SQL Server development database.
+Integration tests use isolated SQLite in-memory databases instead of the SQL Server development database, so they do not need SQL Server or local User Secrets.
+
+GitHub Actions automatically restores dependencies, builds the solution, and runs the tests on pull requests targeting `main` and pushes to `main`.
 
 ## Purpose
 
