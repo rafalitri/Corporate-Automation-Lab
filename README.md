@@ -1,5 +1,7 @@
 # Corporate Automation Lab
 
+[![.NET Tests](https://github.com/rafalitri/Corporate-Automation-Lab/actions/workflows/dotnet-tests.yml/badge.svg)](https://github.com/rafalitri/Corporate-Automation-Lab/actions/workflows/dotnet-tests.yml)
+
 A C# and .NET 10 project focused on task management, REST API development, SQL Server persistence, and automated testing.
 
 The project includes a console application and an ASP.NET Core Web API, both using Entity Framework Core for data access.
