@@ -10,10 +10,14 @@ namespace CorporateAutomation.Api.Controllers;
 public class TareasController : ControllerBase
 {
     private readonly CorporateAutomationContext _db;
+    private readonly ILogger<TareasController> _logger;
 
-    public TareasController(CorporateAutomationContext db)
+    public TareasController(
+        CorporateAutomationContext db,
+        ILogger<TareasController> logger)
     {
         _db = db;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -38,6 +42,9 @@ public class TareasController : ControllerBase
 
         if (tarea is null)
         {
+            _logger.LogDebug(
+                "No se encontró la tarea {TareaId}", id);
+
             return NotFound();
         }
 
@@ -57,8 +64,11 @@ public class TareasController : ControllerBase
         };
 
         _db.Tareas.Add(nuevaTarea);
-
         await _db.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Tarea {TareaId} creada correctamente",
+            nuevaTarea.Id);
 
         return Ok(nuevaTarea);
     }
@@ -76,6 +86,10 @@ public class TareasController : ControllerBase
 
         if (tarea is null)
         {
+            _logger.LogDebug(
+                "No se encontró la tarea {TareaId} para actualizar",
+                id);
+
             return NotFound();
         }
 
@@ -84,6 +98,10 @@ public class TareasController : ControllerBase
         tarea.Prioridad = request.Prioridad;
 
         await _db.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Tarea {TareaId} actualizada correctamente",
+            id);
 
         return Ok(tarea);
     }
@@ -100,12 +118,19 @@ public class TareasController : ControllerBase
 
         if (tarea is null)
         {
+            _logger.LogDebug(
+                "No se encontró la tarea {TareaId} para eliminar",
+                id);
+
             return NotFound();
         }
 
         _db.Tareas.Remove(tarea);
-
         await _db.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Tarea {TareaId} eliminada correctamente",
+            id);
 
         return NoContent();
     }
