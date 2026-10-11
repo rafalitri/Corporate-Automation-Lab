@@ -3,7 +3,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-namespace CorporateAutomation.App;
+namespace CorporateAutomation.Infrastructure;
 
 public class CorporateAutomationContext : DbContext
 {

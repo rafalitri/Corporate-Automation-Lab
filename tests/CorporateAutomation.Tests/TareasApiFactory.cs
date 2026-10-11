@@ -1,5 +1,5 @@
 ﻿using System.Data.Common;
-using CorporateAutomation.App;
+using CorporateAutomation.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;

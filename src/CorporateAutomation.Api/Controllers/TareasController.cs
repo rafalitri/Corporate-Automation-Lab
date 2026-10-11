@@ -1,6 +1,6 @@
 ﻿using CorporateAutomation.Core;
 
-using CorporateAutomation.App;
+using CorporateAutomation.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

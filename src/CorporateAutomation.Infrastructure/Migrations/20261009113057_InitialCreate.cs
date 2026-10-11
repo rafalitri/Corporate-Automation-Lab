@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace CorporateAutomation.App.Migrations
+namespace CorporateAutomation.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

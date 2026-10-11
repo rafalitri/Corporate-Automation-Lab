@@ -1,5 +1,5 @@
 ﻿using CorporateAutomation.Core;
-using CorporateAutomation.App;
+using CorporateAutomation.Infrastructure;
 
 using CorporateAutomationContext db = new();
 

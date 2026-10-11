@@ -1,4 +1,4 @@
-using CorporateAutomation.App;
+﻿using CorporateAutomation.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Scalar.AspNetCore;
@@ -14,7 +14,7 @@ builder.Services.AddDbContext<CorporateAutomationContext>(
         string connectionString =
             configuration.GetConnectionString("CorporateAutomation")
             ?? throw new InvalidOperationException(
-                "No se encontró la cadena de conexión."
+                "No se encontrÃ³ la cadena de conexiÃ³n."
             );
 
         options.UseSqlServer(connectionString);
