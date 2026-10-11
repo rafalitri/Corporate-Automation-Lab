@@ -1,5 +1,4 @@
 ﻿using CorporateAutomation.Core;
-using CorporateAutomation.App;
 
 namespace CorporateAutomation.Tests;
 

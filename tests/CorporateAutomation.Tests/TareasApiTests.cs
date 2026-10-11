@@ -2,7 +2,7 @@
 
 using System.Net;
 using System.Net.Http.Json;
-using CorporateAutomation.App;
+using CorporateAutomation.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

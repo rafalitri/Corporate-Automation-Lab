@@ -2,7 +2,6 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using CorporateAutomation.App;
 
 namespace CorporateAutomation.Api;
 

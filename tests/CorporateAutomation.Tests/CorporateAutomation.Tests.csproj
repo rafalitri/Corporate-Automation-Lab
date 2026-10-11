@@ -21,9 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\CorporateAutomation.App\CorporateAutomation.App.csproj" />
     <ProjectReference Include="..\..\src\CorporateAutomation.Api\CorporateAutomation.Api.csproj" />
     <ProjectReference Include="..\..\src\CorporateAutomation.Core\CorporateAutomation.Core.csproj" />
+    <ProjectReference Include="..\..\src\CorporateAutomation.Infrastructure\CorporateAutomation.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
