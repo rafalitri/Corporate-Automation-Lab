@@ -13,6 +13,11 @@ namespace CorporateAutomation.Tests;
 
 public class TareasApiFactory : WebApplicationFactory<Program>
 {
+    public TareasApiFactory()
+    {
+        ClientOptions.BaseAddress = new Uri("https://localhost");
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureTestServices(services =>
