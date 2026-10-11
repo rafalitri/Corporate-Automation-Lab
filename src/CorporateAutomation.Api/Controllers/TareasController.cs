@@ -118,7 +118,7 @@ public class TareasController : ControllerBase
     {
         Tarea nuevaTarea = new()
         {
-            Nombre = request.Nombre,
+            Nombre = request.Nombre.Trim(),
             Estado = EstadoTarea.Pendiente,
             Prioridad = request.Prioridad
         };
@@ -165,7 +165,7 @@ public class TareasController : ControllerBase
             return NotFound();
         }
 
-        tarea.Nombre = request.Nombre;
+        tarea.Nombre = request.Nombre.Trim();
         tarea.Estado = request.Estado;
         tarea.Prioridad = request.Prioridad;
 

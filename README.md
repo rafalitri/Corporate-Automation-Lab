@@ -238,7 +238,7 @@ Run all automated tests:
 dotnet test
 ```
 
-The test suite contains **27 automated tests** covering task-management logic, API endpoints, request validation, filtering, and pagination.
+The test suite contains **30 automated tests** covering task-management logic, API endpoints, request validation, filtering, and pagination.
 
 Integration tests use isolated SQLite in-memory databases instead of the SQL Server development database.
 
