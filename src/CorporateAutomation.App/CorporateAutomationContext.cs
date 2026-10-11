@@ -1,4 +1,5 @@
-﻿
+﻿using CorporateAutomation.Core;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 

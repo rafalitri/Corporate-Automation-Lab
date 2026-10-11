@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/CorporateAutomation.Api/CorporateAutomation.Api.csproj" />
     <Project Path="src/CorporateAutomation.App/CorporateAutomation.App.csproj" />
+    <Project Path="src/CorporateAutomation.Core/CorporateAutomation.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/CorporateAutomation.Tests/CorporateAutomation.Tests.csproj" />
