@@ -22,14 +22,33 @@ public class TareasController : ControllerBase
 
     // GET: api/tareas
     // Permite filtrar por estado y prioridad.
+
     [HttpGet]
     public async Task<ActionResult<List<Tarea>>> Get(
         [FromQuery] EstadoTarea? estado,
         [FromQuery] PrioridadTarea? prioridad,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] int pagina = 1,
+        [FromQuery] int tamanoPagina = 10)
     {
+        // Validamos que los parámetros sean correctos.
+        if (pagina < 1 || tamanoPagina < 1 || tamanoPagina > 100)
+        {
+            return BadRequest(
+                "La página debe ser mayor que 0 y el tamaño debe estar entre 1 y 100."
+            );
+        }
+
+        long salto = ((long)pagina - 1) * tamanoPagina;
+
+        if (salto > int.MaxValue)
+        {
+            return BadRequest("El número de página es demasiado grande.");
+        }
+
         IQueryable<Tarea> consulta = _db.Tareas.AsNoTracking();
 
+        // Filtrar por estado.
         if (estado.HasValue)
         {
             consulta = consulta.Where(
@@ -37,6 +56,7 @@ public class TareasController : ControllerBase
             );
         }
 
+        // Filtrar por prioridad.
         if (prioridad.HasValue)
         {
             consulta = consulta.Where(
@@ -44,11 +64,21 @@ public class TareasController : ControllerBase
             );
         }
 
+        // Informamos del total de tareas que cumplen los filtros.
+        int total = await consulta.CountAsync(cancellationToken);
+
+        Response.Headers["X-Total-Count"] = total.ToString();
+
+        // Ordenamos y obtenemos solamente la página solicitada.
         List<Tarea> tareas = await consulta
+            .OrderBy(tarea => tarea.Id)
+            .Skip((int)salto)
+            .Take(tamanoPagina)
             .ToListAsync(cancellationToken);
 
         return Ok(tareas);
     }
+
 
     // GET: api/tareas/1
     [HttpGet("{id:int}")]

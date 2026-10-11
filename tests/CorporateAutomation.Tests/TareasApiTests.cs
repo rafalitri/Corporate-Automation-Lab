@@ -474,4 +474,94 @@ public class TareasApiTests
     }
 
 
+    [Theory]
+    [InlineData(1, 2, "Tarea 1|Tarea 2")]
+    [InlineData(2, 2, "Tarea 3|Tarea 4")]
+    [InlineData(3, 2, "Tarea 5")]
+    [InlineData(4, 2, "")]
+    public async Task GetTareas_PaginacionCorrecta(
+        int pagina,
+        int tamanoPagina,
+        string nombresEsperados)
+    {
+        using var factory = new TareasApiFactory();
+        using var client = factory.CreateClient();
+
+        PrepararBaseDeDatos(factory);
+
+        // Guardamos cinco tareas.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider
+                .GetRequiredService<CorporateAutomationContext>();
+
+            for (int i = 1; i <= 5; i++)
+            {
+                db.Tareas.Add(new Tarea
+                {
+                    Nombre = $"Tarea {i}",
+                    Estado = EstadoTarea.Pendiente,
+                    Prioridad = PrioridadTarea.Media
+                });
+            }
+
+            db.SaveChanges();
+        }
+
+        // Solicitamos la página indicada.
+        var response = await client.GetAsync(
+            $"/api/tareas?pagina={pagina}&tamanoPagina={tamanoPagina}"
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // El total debe seguir siendo cinco.
+        string total = response.Headers
+            .GetValues("X-Total-Count")
+            .Single();
+
+        Assert.Equal("5", total);
+
+        // Comprobamos las tareas devueltas.
+        var resultado = await response.Content
+            .ReadFromJsonAsync<List<JsonElement>>();
+
+        Assert.NotNull(resultado);
+
+        string[] obtenidos = resultado
+            .Select(t => t.GetProperty("nombre").GetString()!)
+            .ToArray();
+
+        string[] esperados = nombresEsperados.Split(
+            '|',
+            StringSplitOptions.RemoveEmptyEntries
+        );
+
+        Assert.Equal(esperados, obtenidos);
+    }
+
+    [Theory]
+    [InlineData(0, 10)]
+    [InlineData(1, 0)]
+    [InlineData(1, 101)]
+    [InlineData(int.MaxValue, 100)]
+    public async Task GetTareas_PaginacionInvalida_Devuelve400(
+        int pagina,
+        int tamanoPagina)
+    {
+        using var factory = new TareasApiFactory();
+        using var client = factory.CreateClient();
+
+        PrepararBaseDeDatos(factory);
+
+        var response = await client.GetAsync(
+            $"/api/tareas?pagina={pagina}&tamanoPagina={tamanoPagina}"
+        );
+
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            response.StatusCode
+        );
+    }
+
 }
