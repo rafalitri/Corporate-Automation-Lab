@@ -128,6 +128,37 @@ dotnet run --project src/CorporateAutomation.Api --launch-profile https
 
 API base URL: `https://localhost:7217/api/tareas`
 
+
+### Interactive API Documentation
+
+The project includes Scalar, an interactive OpenAPI interface for exploring and testing REST endpoints.
+
+Start the Web API and open:
+
+**https://localhost:7217/scalar**
+
+Scalar is available only in the Development environment.
+
+### Filtering and Pagination
+
+The GET endpoint supports optional query parameters:
+
+- `estado`: `Pendiente` or `Completada`
+- `prioridad`: `Baja`, `Media`, or `Alta`
+- `pagina`: Page number (default: 1)
+- `tamanoPagina`: Results per page (default: 10, maximum: 100)
+
+Example:
+
+```http
+GET /api/tareas?estado=Pendiente&prioridad=Alta&pagina=1&tamanoPagina=10
+```
+
+The response includes an `X-Total-Count` header with the total number of matching tasks.
+
+Creating a task returns HTTP `201 Created` with a `Location` header.
+
+
 ## API Endpoints
 
 | Method | Endpoint | Description |
@@ -163,7 +194,7 @@ Run all automated tests:
 dotnet test
 ```
 
-The test suite contains 16 unit and integration tests covering task-management logic, API endpoints, and request validation.
+The test suite contains 27 unit and integration tests covering task-management logic, API endpoints, and request validation.
 
 Integration tests use isolated SQLite in-memory databases instead of the SQL Server development database, so they do not need SQL Server or local User Secrets.
 
