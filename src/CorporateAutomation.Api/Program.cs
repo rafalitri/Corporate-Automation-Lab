@@ -5,6 +5,8 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddProblemDetails();
+
 builder.Services.AddDbContext<CorporateAutomationContext>(
     (serviceProvider, options) =>
     {
@@ -47,6 +49,8 @@ builder.Services.AddOpenApi(options =>
 
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {

@@ -35,6 +35,7 @@ The solution includes a console application and an ASP.NET Core Web API, both sh
 - Automated builds and tests with GitHub Actions
 - Local database configuration using User Secrets
 - Separation of domain logic, infrastructure, and application layers
+- Centralized exception handling with ProblemDetails
 
 ## Project Structure
 
