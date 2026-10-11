@@ -20,16 +20,37 @@ public class TareasController : ControllerBase
         _logger = logger;
     }
 
+    // GET: api/tareas
+    // Permite filtrar por estado y prioridad.
     [HttpGet]
     public async Task<ActionResult<List<Tarea>>> Get(
+        [FromQuery] EstadoTarea? estado,
+        [FromQuery] PrioridadTarea? prioridad,
         CancellationToken cancellationToken)
     {
-        List<Tarea> tareas = await _db.Tareas
+        IQueryable<Tarea> consulta = _db.Tareas.AsNoTracking();
+
+        if (estado.HasValue)
+        {
+            consulta = consulta.Where(
+                tarea => tarea.Estado == estado.Value
+            );
+        }
+
+        if (prioridad.HasValue)
+        {
+            consulta = consulta.Where(
+                tarea => tarea.Prioridad == prioridad.Value
+            );
+        }
+
+        List<Tarea> tareas = await consulta
             .ToListAsync(cancellationToken);
 
         return Ok(tareas);
     }
 
+    // GET: api/tareas/1
     [HttpGet("{id:int}")]
     public async Task<ActionResult<Tarea>> GetById(
         int id,
@@ -43,7 +64,9 @@ public class TareasController : ControllerBase
         if (tarea is null)
         {
             _logger.LogDebug(
-                "No se encontró la tarea {TareaId}", id);
+                "No se encontró la tarea {TareaId}",
+                id
+            );
 
             return NotFound();
         }
@@ -51,6 +74,7 @@ public class TareasController : ControllerBase
         return Ok(tarea);
     }
 
+    // POST: api/tareas
     [HttpPost]
     public async Task<ActionResult<Tarea>> Post(
         CrearTareaRequest request,
@@ -64,11 +88,13 @@ public class TareasController : ControllerBase
         };
 
         _db.Tareas.Add(nuevaTarea);
+
         await _db.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
             "Tarea {TareaId} creada correctamente",
-            nuevaTarea.Id);
+            nuevaTarea.Id
+        );
 
         return CreatedAtAction(
             nameof(GetById),
@@ -77,6 +103,7 @@ public class TareasController : ControllerBase
         );
     }
 
+    // PUT: api/tareas/1
     [HttpPut("{id:int}")]
     public async Task<ActionResult<Tarea>> Put(
         int id,
@@ -92,7 +119,8 @@ public class TareasController : ControllerBase
         {
             _logger.LogDebug(
                 "No se encontró la tarea {TareaId} para actualizar",
-                id);
+                id
+            );
 
             return NotFound();
         }
@@ -105,11 +133,13 @@ public class TareasController : ControllerBase
 
         _logger.LogInformation(
             "Tarea {TareaId} actualizada correctamente",
-            id);
+            id
+        );
 
         return Ok(tarea);
     }
 
+    // DELETE: api/tareas/1
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(
         int id,
@@ -124,17 +154,20 @@ public class TareasController : ControllerBase
         {
             _logger.LogDebug(
                 "No se encontró la tarea {TareaId} para eliminar",
-                id);
+                id
+            );
 
             return NotFound();
         }
 
         _db.Tareas.Remove(tarea);
+
         await _db.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
             "Tarea {TareaId} eliminada correctamente",
-            id);
+            id
+        );
 
         return NoContent();
     }
