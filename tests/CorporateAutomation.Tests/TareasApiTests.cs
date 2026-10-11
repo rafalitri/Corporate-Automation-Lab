@@ -180,4 +180,220 @@ public class TareasApiTests
 
         Assert.False(existe);
     }
+
+    [Fact]
+    public async Task PostTarea_NombreVacio_Devuelve400()
+    {
+        using var factory = new TareasApiFactory();
+        using var client = factory.CreateClient();
+
+        PrepararBaseDeDatos(factory);
+
+        // Intentamos crear una tarea sin nombre.
+        var nuevaTarea = new
+        {
+            Nombre = "",
+            Prioridad = "Alta"
+        };
+
+        var response = await client.PostAsJsonAsync(
+            "/api/tareas",
+            nuevaTarea
+        );
+
+        // La API debe rechazar la petición.
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        // Comprobamos que no se ha guardado ninguna tarea.
+        using var scope = factory.Services.CreateScope();
+
+        var db = scope.ServiceProvider
+            .GetRequiredService<CorporateAutomationContext>();
+
+        Assert.Empty(db.Tareas);
+    }
+
+
+    [Fact]
+    public async Task PostTarea_SinPrioridad_Devuelve400()
+    {
+        using var factory = new TareasApiFactory();
+        using var client = factory.CreateClient();
+
+        PrepararBaseDeDatos(factory);
+
+        // Enviamos una tarea sin indicar su prioridad.
+        var nuevaTarea = new
+        {
+            Nombre = "Revisar equipos"
+        };
+
+        var response = await client.PostAsJsonAsync(
+            "/api/tareas",
+            nuevaTarea
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        // No debe haberse guardado ninguna tarea.
+        using var scope = factory.Services.CreateScope();
+
+        var db = scope.ServiceProvider
+            .GetRequiredService<CorporateAutomationContext>();
+
+        Assert.Empty(db.Tareas);
+    }
+
+
+    [Fact]
+    public async Task PutTarea_NombreVacio_Devuelve400()
+    {
+        using var factory = new TareasApiFactory();
+        using var client = factory.CreateClient();
+
+        PrepararBaseDeDatos(factory);
+
+        int id;
+
+        // Creamos una tarea válida.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider
+                .GetRequiredService<CorporateAutomationContext>();
+
+            var tarea = new Tarea
+            {
+                Nombre = "Actualizar servidores",
+                Estado = EstadoTarea.Pendiente,
+                Prioridad = PrioridadTarea.Alta
+            };
+
+            db.Tareas.Add(tarea);
+            db.SaveChanges();
+
+            id = tarea.Id;
+        }
+
+        // Intentamos actualizarla con un nombre vacío.
+        var cambios = new
+        {
+            Nombre = "",
+            Estado = "Completada",
+            Prioridad = "Media"
+        };
+
+        var response = await client.PutAsJsonAsync(
+            $"/api/tareas/{id}",
+            cambios
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        // Comprobamos que la tarea original no ha cambiado.
+        using var verificationScope = factory.Services.CreateScope();
+
+        var verificationDb = verificationScope.ServiceProvider
+            .GetRequiredService<CorporateAutomationContext>();
+
+        var tareaGuardada = verificationDb.Tareas.Single(t => t.Id == id);
+
+        Assert.Equal("Actualizar servidores", tareaGuardada.Nombre);
+        Assert.Equal(EstadoTarea.Pendiente, tareaGuardada.Estado);
+        Assert.Equal(PrioridadTarea.Alta, tareaGuardada.Prioridad);
+    }
+
+
+    [Fact]
+    public async Task PostTarea_PrioridadInvalida_Devuelve400()
+    {
+        using var factory = new TareasApiFactory();
+        using var client = factory.CreateClient();
+
+        PrepararBaseDeDatos(factory);
+
+        // Intentamos crear una tarea con una prioridad inexistente.
+        var nuevaTarea = new
+        {
+            Nombre = "Revisar servidores",
+            Prioridad = 999
+        };
+
+        var response = await client.PostAsJsonAsync(
+            "/api/tareas",
+            nuevaTarea
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        // Comprobamos que no se ha guardado ninguna tarea.
+        using var scope = factory.Services.CreateScope();
+
+        var db = scope.ServiceProvider
+            .GetRequiredService<CorporateAutomationContext>();
+
+        Assert.Empty(db.Tareas);
+    }
+
+
+    [Theory]
+    [InlineData(999, 1)] // Estado inválido
+    [InlineData(0, 999)] // Prioridad inválida
+    public async Task PutTarea_EnumInvalido_Devuelve400(
+        int estado,
+        int prioridad)
+    {
+        using var factory = new TareasApiFactory();
+        using var client = factory.CreateClient();
+
+        PrepararBaseDeDatos(factory);
+
+        int id;
+
+        // Guardamos una tarea válida.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider
+                .GetRequiredService<CorporateAutomationContext>();
+
+            var tarea = new Tarea
+            {
+                Nombre = "Revisar servidores",
+                Estado = EstadoTarea.Pendiente,
+                Prioridad = PrioridadTarea.Media
+            };
+
+            db.Tareas.Add(tarea);
+            db.SaveChanges();
+
+            id = tarea.Id;
+        }
+
+        // Intentamos actualizarla con valores incorrectos.
+        var cambios = new
+        {
+            Nombre = "Tarea modificada",
+            Estado = estado,
+            Prioridad = prioridad
+        };
+
+        var response = await client.PutAsJsonAsync(
+            $"/api/tareas/{id}",
+            cambios
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        // Verificamos que los datos originales siguen intactos.
+        using var scopeVerificacion = factory.Services.CreateScope();
+
+        var dbVerificacion = scopeVerificacion.ServiceProvider
+            .GetRequiredService<CorporateAutomationContext>();
+
+        var tareaGuardada = dbVerificacion.Tareas.Single(t => t.Id == id);
+
+        Assert.Equal("Revisar servidores", tareaGuardada.Nombre);
+        Assert.Equal(EstadoTarea.Pendiente, tareaGuardada.Estado);
+        Assert.Equal(PrioridadTarea.Media, tareaGuardada.Prioridad);
+    }
+
 }
