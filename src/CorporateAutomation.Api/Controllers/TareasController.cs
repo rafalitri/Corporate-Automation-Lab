@@ -70,7 +70,11 @@ public class TareasController : ControllerBase
             "Tarea {TareaId} creada correctamente",
             nuevaTarea.Id);
 
-        return Ok(nuevaTarea);
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = nuevaTarea.Id },
+            nuevaTarea
+        );
     }
 
     [HttpPut("{id:int}")]
