@@ -1,4 +1,4 @@
-﻿namespace CorporateAutomation.App;
+﻿namespace CorporateAutomation.Core;
 
 public class Tarea
 {
