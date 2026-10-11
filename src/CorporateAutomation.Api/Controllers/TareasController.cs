@@ -1,5 +1,7 @@
-﻿using CorporateAutomation.App;
+﻿
+using CorporateAutomation.App;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CorporateAutomation.Api.Controllers;
 
@@ -14,20 +16,25 @@ public class TareasController : ControllerBase
         _db = db;
     }
 
-
     [HttpGet]
-    public ActionResult<List<Tarea>> Get()
+    public async Task<ActionResult<List<Tarea>>> Get(
+        CancellationToken cancellationToken)
     {
-        List<Tarea> tareas = _db.Tareas.ToList();
+        List<Tarea> tareas = await _db.Tareas
+            .ToListAsync(cancellationToken);
 
         return Ok(tareas);
     }
 
-
     [HttpGet("{id:int}")]
-    public ActionResult<Tarea> GetById(int id)
+    public async Task<ActionResult<Tarea>> GetById(
+        int id,
+        CancellationToken cancellationToken)
     {
-        Tarea? tarea = _db.Tareas.Find(id);
+        Tarea? tarea = await _db.Tareas.FindAsync(
+            new object[] { id },
+            cancellationToken
+        );
 
         if (tarea is null)
         {
@@ -37,9 +44,10 @@ public class TareasController : ControllerBase
         return Ok(tarea);
     }
 
-
     [HttpPost]
-    public ActionResult<Tarea> Post(CrearTareaRequest request)
+    public async Task<ActionResult<Tarea>> Post(
+        CrearTareaRequest request,
+        CancellationToken cancellationToken)
     {
         Tarea nuevaTarea = new()
         {
@@ -49,19 +57,22 @@ public class TareasController : ControllerBase
         };
 
         _db.Tareas.Add(nuevaTarea);
-        _db.SaveChanges();
+
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Ok(nuevaTarea);
     }
 
-
     [HttpPut("{id:int}")]
-    public ActionResult<Tarea> Put(
+    public async Task<ActionResult<Tarea>> Put(
         int id,
-        ActualizarTareaRequest request
-    )
+        ActualizarTareaRequest request,
+        CancellationToken cancellationToken)
     {
-        Tarea? tarea = _db.Tareas.Find(id);
+        Tarea? tarea = await _db.Tareas.FindAsync(
+            new object[] { id },
+            cancellationToken
+        );
 
         if (tarea is null)
         {
@@ -72,16 +83,20 @@ public class TareasController : ControllerBase
         tarea.Estado = request.Estado;
         tarea.Prioridad = request.Prioridad;
 
-        _db.SaveChanges();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return Ok(tarea);
     }
 
-
     [HttpDelete("{id:int}")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(
+        int id,
+        CancellationToken cancellationToken)
     {
-        Tarea? tarea = _db.Tareas.Find(id);
+        Tarea? tarea = await _db.Tareas.FindAsync(
+            new object[] { id },
+            cancellationToken
+        );
 
         if (tarea is null)
         {
@@ -89,7 +104,8 @@ public class TareasController : ControllerBase
         }
 
         _db.Tareas.Remove(tarea);
-        _db.SaveChanges();
+
+        await _db.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }
