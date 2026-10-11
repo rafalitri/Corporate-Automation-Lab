@@ -65,7 +65,15 @@ public class TareasApiTests
             nuevaTarea
         );
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        Assert.NotNull(response.Headers.Location);
+
+        var consulta = await client.GetAsync(
+            response.Headers.Location
+        );
+
+        Assert.Equal(HttpStatusCode.OK, consulta.StatusCode);
 
         using var scope = factory.Services.CreateScope();
 
@@ -74,9 +82,20 @@ public class TareasApiTests
 
         var tareaGuardada = Assert.Single(db.Tareas);
 
-        Assert.Equal("Revisar copias de seguridad", tareaGuardada.Nombre);
-        Assert.Equal(PrioridadTarea.Alta, tareaGuardada.Prioridad);
-        Assert.Equal(EstadoTarea.Pendiente, tareaGuardada.Estado);
+        Assert.Equal(
+            "Revisar copias de seguridad",
+            tareaGuardada.Nombre
+        );
+
+        Assert.Equal(
+            PrioridadTarea.Alta,
+            tareaGuardada.Prioridad
+        );
+
+        Assert.Equal(
+            EstadoTarea.Pendiente,
+            tareaGuardada.Estado
+        );
     }
 
     [Fact]
@@ -129,11 +148,23 @@ public class TareasApiTests
         var verificationDb = verificationScope.ServiceProvider
             .GetRequiredService<CorporateAutomationContext>();
 
-        var tareaActualizada = verificationDb.Tareas.Single(t => t.Id == id);
+        var tareaActualizada = verificationDb.Tareas
+            .Single(t => t.Id == id);
 
-        Assert.Equal("Tarea actualizada", tareaActualizada.Nombre);
-        Assert.Equal(EstadoTarea.Completada, tareaActualizada.Estado);
-        Assert.Equal(PrioridadTarea.Alta, tareaActualizada.Prioridad);
+        Assert.Equal(
+            "Tarea actualizada",
+            tareaActualizada.Nombre
+        );
+
+        Assert.Equal(
+            EstadoTarea.Completada,
+            tareaActualizada.Estado
+        );
+
+        Assert.Equal(
+            PrioridadTarea.Alta,
+            tareaActualizada.Prioridad
+        );
     }
 
     [Fact]
@@ -166,9 +197,14 @@ public class TareasApiTests
         }
 
         // Eliminamos mediante HTTP DELETE.
-        var response = await client.DeleteAsync($"/api/tareas/{id}");
+        var response = await client.DeleteAsync(
+            $"/api/tareas/{id}"
+        );
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(
+            HttpStatusCode.NoContent,
+            response.StatusCode
+        );
 
         // Comprobamos que ya no existe.
         using var verificationScope = factory.Services.CreateScope();
@@ -176,7 +212,8 @@ public class TareasApiTests
         var verificationDb = verificationScope.ServiceProvider
             .GetRequiredService<CorporateAutomationContext>();
 
-        bool existe = verificationDb.Tareas.Any(t => t.Id == id);
+        bool existe = verificationDb.Tareas
+            .Any(t => t.Id == id);
 
         Assert.False(existe);
     }
@@ -202,7 +239,10 @@ public class TareasApiTests
         );
 
         // La API debe rechazar la petición.
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            response.StatusCode
+        );
 
         // Comprobamos que no se ha guardado ninguna tarea.
         using var scope = factory.Services.CreateScope();
@@ -212,7 +252,6 @@ public class TareasApiTests
 
         Assert.Empty(db.Tareas);
     }
-
 
     [Fact]
     public async Task PostTarea_SinPrioridad_Devuelve400()
@@ -233,7 +272,10 @@ public class TareasApiTests
             nuevaTarea
         );
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            response.StatusCode
+        );
 
         // No debe haberse guardado ninguna tarea.
         using var scope = factory.Services.CreateScope();
@@ -243,7 +285,6 @@ public class TareasApiTests
 
         Assert.Empty(db.Tareas);
     }
-
 
     [Fact]
     public async Task PutTarea_NombreVacio_Devuelve400()
@@ -287,7 +328,10 @@ public class TareasApiTests
             cambios
         );
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            response.StatusCode
+        );
 
         // Comprobamos que la tarea original no ha cambiado.
         using var verificationScope = factory.Services.CreateScope();
@@ -295,13 +339,24 @@ public class TareasApiTests
         var verificationDb = verificationScope.ServiceProvider
             .GetRequiredService<CorporateAutomationContext>();
 
-        var tareaGuardada = verificationDb.Tareas.Single(t => t.Id == id);
+        var tareaGuardada = verificationDb.Tareas
+            .Single(t => t.Id == id);
 
-        Assert.Equal("Actualizar servidores", tareaGuardada.Nombre);
-        Assert.Equal(EstadoTarea.Pendiente, tareaGuardada.Estado);
-        Assert.Equal(PrioridadTarea.Alta, tareaGuardada.Prioridad);
+        Assert.Equal(
+            "Actualizar servidores",
+            tareaGuardada.Nombre
+        );
+
+        Assert.Equal(
+            EstadoTarea.Pendiente,
+            tareaGuardada.Estado
+        );
+
+        Assert.Equal(
+            PrioridadTarea.Alta,
+            tareaGuardada.Prioridad
+        );
     }
-
 
     [Fact]
     public async Task PostTarea_PrioridadInvalida_Devuelve400()
@@ -311,7 +366,7 @@ public class TareasApiTests
 
         PrepararBaseDeDatos(factory);
 
-        // Intentamos crear una tarea con una prioridad inexistente.
+        // Intentamos crear una tarea con prioridad inexistente.
         var nuevaTarea = new
         {
             Nombre = "Revisar servidores",
@@ -323,7 +378,10 @@ public class TareasApiTests
             nuevaTarea
         );
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            response.StatusCode
+        );
 
         // Comprobamos que no se ha guardado ninguna tarea.
         using var scope = factory.Services.CreateScope();
@@ -333,7 +391,6 @@ public class TareasApiTests
 
         Assert.Empty(db.Tareas);
     }
-
 
     [Theory]
     [InlineData(999, 1)] // Estado inválido
@@ -381,7 +438,10 @@ public class TareasApiTests
             cambios
         );
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            response.StatusCode
+        );
 
         // Verificamos que los datos originales siguen intactos.
         using var scopeVerificacion = factory.Services.CreateScope();
@@ -389,11 +449,22 @@ public class TareasApiTests
         var dbVerificacion = scopeVerificacion.ServiceProvider
             .GetRequiredService<CorporateAutomationContext>();
 
-        var tareaGuardada = dbVerificacion.Tareas.Single(t => t.Id == id);
+        var tareaGuardada = dbVerificacion.Tareas
+            .Single(t => t.Id == id);
 
-        Assert.Equal("Revisar servidores", tareaGuardada.Nombre);
-        Assert.Equal(EstadoTarea.Pendiente, tareaGuardada.Estado);
-        Assert.Equal(PrioridadTarea.Media, tareaGuardada.Prioridad);
+        Assert.Equal(
+            "Revisar servidores",
+            tareaGuardada.Nombre
+        );
+
+        Assert.Equal(
+            EstadoTarea.Pendiente,
+            tareaGuardada.Estado
+        );
+
+        Assert.Equal(
+            PrioridadTarea.Media,
+            tareaGuardada.Prioridad
+        );
     }
-
 }
