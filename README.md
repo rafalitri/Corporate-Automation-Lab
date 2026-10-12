@@ -155,6 +155,130 @@ API base URL:
 
 `https://localhost:7217/api/tareas`
 
+
+## Docker
+
+The project supports containerized local development using
+Docker and Docker Compose.
+
+Docker Compose runs two separate services:
+
+- **API:** ASP.NET Core 10 application running on Linux.
+- **Database:** SQL Server 2022 with persistent storage.
+
+The API uses a multi-stage Dockerfile and runs as a non-root user.
+
+### Requirements
+
+- Docker Desktop with Linux containers
+- Docker Compose
+
+### Configuration
+
+Create a `.env` file in the repository root with:
+
+- `MSSQL_SA_PASSWORD`: Strong SQL Server password.
+- `JWT_KEY`: Base64-encoded random 256-bit key.
+- `DEV_TOKEN_PASSWORD`: Random development credential.
+
+The `.env` file is ignored by Git and must never be committed.
+
+### Start the Database
+
+```powershell
+docker compose up -d sqlserver
+docker compose ps
+```
+
+Wait until SQL Server reports a healthy status.
+
+
+### Database Initialization
+
+On first use, apply the existing Entity Framework Core migration
+to the SQL Server container.
+
+Start SQL Server:
+
+```powershell
+docker compose up -d sqlserver
+```
+
+In PowerShell, load the SQL Server password from the local
+`.env` file and temporarily configure the database connection:
+
+```powershell
+$linea = Get-Content .env |
+    Where-Object { $_ -like "MSSQL_SA_PASSWORD=*" } |
+    Select-Object -First 1
+
+if (-not $linea) {
+    throw "MSSQL_SA_PASSWORD not found in .env"
+}
+
+$password = $linea.Substring("MSSQL_SA_PASSWORD=".Length)
+
+$env:ConnectionStrings__CorporateAutomation = "Server=127.0.0.1,14330;Database=CorporateAutomation;User Id=sa;Password=$password;Encrypt=True;TrustServerCertificate=True"
+
+try {
+    dotnet ef database update --project src/CorporateAutomation.Infrastructure --startup-project src/CorporateAutomation.Api
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Database migration failed"
+    }
+}
+finally {
+    Remove-Item Env:\ConnectionStrings__CorporateAutomation -ErrorAction SilentlyContinue
+    Remove-Variable linea, password -ErrorAction SilentlyContinue
+}
+```
+
+This requires the .NET SDK and the EF Core CLI tool.
+Restore the local tool with `dotnet tool restore` if necessary.
+
+The migration creates the database and its tables in Docker,
+without modifying the local SQL Server Express instance.
+
+The Docker SQL Server instance is accessible at
+`127.0.0.1,14330`.
+
+
+### Start the Application
+
+```powershell
+docker compose up -d --build
+```
+
+Once the containers are running, access:
+
+- API: http://localhost:8080/api/tareas
+- Scalar: http://localhost:8080/scalar
+
+The services are bound to localhost for local development.
+
+### Persistent Storage
+
+SQL Server uses a named Docker volume to preserve database data.
+
+```powershell
+docker compose down
+docker compose up -d
+```
+
+The database remains available after recreating the containers.
+
+**Warning:** Running `docker compose down -v` removes
+the database volume and its stored data.
+
+### Security
+
+Docker Compose uses the Development environment for local testing.
+
+The development-only JWT token endpoint is not intended for
+public deployment or production authentication.
+```
+
+
 ### Interactive API Documentation
 
 The project includes Scalar, an interactive OpenAPI interface for exploring and testing REST endpoints.
