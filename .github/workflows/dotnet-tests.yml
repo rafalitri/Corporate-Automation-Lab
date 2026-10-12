@@ -28,3 +28,13 @@ jobs:
 
       - name: Run tests
         run: dotnet test CorporateAutomation.slnx --configuration Release --no-build
+
+  docker-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -f src/CorporateAutomation.Api/Dockerfile -t corporate-automation-api:ci .
