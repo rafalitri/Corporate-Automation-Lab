@@ -38,6 +38,7 @@ The solution includes a console application and an ASP.NET Core Web API, both sh
 - Centralized exception handling with ProblemDetails
 - JWT Bearer authentication for protected API endpoints
 - JWT signature and expiration validation
+- API and database health checks with Docker monitoring
 
 ## Project Structure
 
@@ -255,6 +256,33 @@ Once the containers are running, access:
 - Scalar: http://localhost:8080/scalar
 
 The services are bound to localhost for local development.
+
+
+### Health Checks
+
+The API provides a health check endpoint:
+
+`GET /health`
+
+This endpoint checks database connectivity using Entity Framework Core.
+
+Expected responses:
+
+- `200 OK` — `Healthy`: the database is accessible.
+- `503 Service Unavailable` — `Unhealthy`: the database is unavailable.
+
+Docker Compose monitors both the API and SQL Server.
+
+The API health check runs every 15 seconds and marks the
+container as unhealthy after repeated failures.
+
+Check the container status with:
+
+`docker compose ps`
+
+Docker health checks detect problems but do not
+automatically restart unhealthy containers.
+
 
 ### Persistent Storage
 
