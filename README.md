@@ -36,6 +36,8 @@ The solution includes a console application and an ASP.NET Core Web API, both sh
 - Local database configuration using User Secrets
 - Separation of domain logic, infrastructure, and application layers
 - Centralized exception handling with ProblemDetails
+- JWT Bearer authentication for protected API endpoints
+- JWT signature and expiration validation
 
 ## Project Structure
 
@@ -175,6 +177,51 @@ The API documentation includes endpoint descriptions, request schemas, and expec
 | PUT | `/api/tareas/{id}` | Update a task |
 | DELETE | `/api/tareas/{id}` | Delete a task |
 
+
+### JWT Authentication
+
+The API supports JWT Bearer authentication using HS256.
+
+Currently, the DELETE endpoint requires a valid JWT.
+Other task endpoints remain publicly accessible.
+
+JWT validation includes:
+- Digital signature verification
+- Issuer and audience validation
+- Token expiration validation
+
+Signing keys and development credentials are stored
+locally using .NET User Secrets.
+
+### Development Token Generation
+
+For local testing, the API provides:
+
+POST /api/dev/token
+
+This endpoint is only registered in the Development
+environment and requires a separate development credential
+configured through User Secrets.
+
+Generated tokens expire after 15 minutes.
+
+The endpoint is not available in Production.
+
+This is a development-only testing mechanism, not a
+production user login system.
+
+### Authentication Tests
+
+Automated integration tests verify:
+- Requests without authentication
+- Requests with valid JWTs
+- Expired tokens
+- Invalid token signatures
+- Incorrect development credentials
+- Successful development token generation
+- Endpoint unavailability in Production
+
+
 ### Example: Create a Task
 
 **POST** `/api/tareas`
@@ -238,7 +285,7 @@ Run all automated tests:
 dotnet test
 ```
 
-The test suite contains **30 automated tests** covering task-management logic, API endpoints, request validation, filtering, and pagination.
+The test suite contains **36 automated tests** covering task-management logic, API endpoints, request validation, filtering, and pagination.
 
 Integration tests use isolated SQLite in-memory databases instead of the SQL Server development database.
 

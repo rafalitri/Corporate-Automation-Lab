@@ -1,8 +1,8 @@
 ﻿using CorporateAutomation.Core;
-
 using CorporateAutomation.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CorporateAutomation.Api.Controllers;
 
@@ -181,6 +181,7 @@ public class TareasController : ControllerBase
 
     // DELETE: api/tareas/1
     // Eliminar una tarea existente.
+    [Authorize]
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
