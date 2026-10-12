@@ -73,6 +73,10 @@ builder.Services.AddDbContext<CorporateAutomationContext>(
     }
 );
 
+// Comprobar la disponibilidad de la base de datos.
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<CorporateAutomationContext>("database");
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -196,6 +200,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Endpoint público para comprobar el estado de la API y la base de datos.
+app.MapHealthChecks("/health");
 
 app.Run();
 

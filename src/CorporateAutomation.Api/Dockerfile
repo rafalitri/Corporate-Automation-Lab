@@ -28,7 +28,12 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
-# Ejecutar con un usuario sin privilegios de administrador.
+# Instalar curl para comprobar la salud del contenedor.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Ejecutar la API como usuario sin privilegios.
 USER $APP_UID
 
 ENV ASPNETCORE_HTTP_PORTS=8080
