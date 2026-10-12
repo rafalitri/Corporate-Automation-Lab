@@ -1,5 +1,4 @@
 ﻿using CorporateAutomation.Core;
-
 using System.Net;
 using System.Net.Http.Json;
 using CorporateAutomation.Infrastructure;
@@ -7,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using System.Text.Json;
+using System.Net.Http.Headers;
 
 namespace CorporateAutomation.Tests;
 
@@ -149,6 +149,12 @@ public class TareasApiTests
     {
         using var factory = new TareasApiFactory();
         using var client = factory.CreateClient();
+
+        // Autenticamos únicamente esta prueba con un token válido.
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            factory.CrearTokenValido()
+        );
 
         PrepararBaseDeDatos(factory);
 
@@ -561,6 +567,25 @@ public class TareasApiTests
 
         Assert.Equal(
             HttpStatusCode.BadRequest,
+            response.StatusCode
+        );
+    }
+
+
+    [Fact]
+    public async Task DeleteTarea_SinToken_Devuelve401()
+    {
+        using var factory = new TareasApiFactory();
+        using var client = factory.CreateClient();
+
+        PrepararBaseDeDatos(factory);
+
+        // Intentamos eliminar una tarea sin autenticarnos.
+        var response = await client.DeleteAsync("/api/tareas/999");
+
+        // La API debe rechazar la petición antes de consultar la tarea.
+        Assert.Equal(
+            HttpStatusCode.Unauthorized,
             response.StatusCode
         );
     }
