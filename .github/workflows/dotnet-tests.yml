@@ -8,6 +8,7 @@ on:
     branches: [main]
 
 jobs:
+  # 1. Compilar .NET y ejecutar las pruebas automatizadas.
   build-and-test:
     runs-on: ubuntu-latest
 
@@ -29,6 +30,7 @@ jobs:
       - name: Run tests
         run: dotnet test CorporateAutomation.slnx --configuration Release --no-build
 
+  # 2. Comprobar que la imagen Docker se construye correctamente.
   docker-build:
     runs-on: ubuntu-latest
 
@@ -38,3 +40,80 @@ jobs:
 
       - name: Build Docker image
         run: docker build -f src/CorporateAutomation.Api/Dockerfile -t corporate-automation-api:ci .
+
+  # 3. Probar la API conectada a SQL Server real en Docker.
+  docker-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # Necesario para que EF Core encuentre project.assets.json.
+      - name: Restore dependencies
+        run: dotnet restore CorporateAutomation.slnx
+
+      - name: Generate temporary test credentials
+        shell: bash
+        run: |
+          {
+            printf 'MSSQL_SA_PASSWORD=Aa1!%s\n' "$(openssl rand -hex 24)"
+            printf 'JWT_KEY=%s\n' "$(openssl rand -base64 32)"
+            printf 'DEV_TOKEN_PASSWORD=%s\n' "$(openssl rand -hex 24)"
+          } > .env
+
+      - name: Start SQL Server
+        run: docker compose up -d --wait sqlserver
+
+      - name: Apply database migrations
+        shell: bash
+        run: |
+          dotnet tool install --global dotnet-ef --version 10.0.12
+
+          source .env
+
+          export ConnectionStrings__CorporateAutomation="Server=127.0.0.1,14330;Database=CorporateAutomation;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+
+          "$HOME/.dotnet/tools/dotnet-ef" database update \
+            --project src/CorporateAutomation.Infrastructure \
+            --startup-project src/CorporateAutomation.Api
+
+      - name: Start API and wait for health
+        run: docker compose up -d --build --wait api
+
+      - name: Verify API and database integration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curl -fsS http://127.0.0.1:8080/health | grep -qx Healthy
+
+          response=$(curl -fsS \
+            -X POST http://127.0.0.1:8080/api/tareas \
+            -H "Content-Type: application/json" \
+            -d '{"nombre":"Docker integration test","prioridad":"Alta"}')
+
+          echo "$response" |
+            jq -e '.id > 0 and .nombre == "Docker integration test"' > /dev/null
+
+          curl -fsS http://127.0.0.1:8080/api/tareas |
+            jq -e 'any(.[]; .nombre == "Docker integration test")' > /dev/null
+
+      - name: Show container status on failure
+        if: failure()
+        run: docker compose ps
+
+      - name: Clean up test containers
+        if: always()
+        shell: bash
+        run: |
+          if [ -f .env ]; then
+            docker compose down -v
+          fi
+          rm -f .env
