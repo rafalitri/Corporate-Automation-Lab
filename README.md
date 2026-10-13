@@ -7,6 +7,12 @@ A C# and .NET 10 project focused on task management, REST API development, SQL S
 
 The solution includes a console application, an ASP.NET Core Web API, and a responsive web dashboard.
 
+## Dashboard Preview
+
+![Corporate Automation Lab Dashboard](docs/images/dashboard.png)
+
+The dashboard provides real-time task statistics, task search, combined filters, and task management through the REST API.
+
 ## Tech Stack
 
 - C# / .NET 10
@@ -201,15 +207,53 @@ The API uses a multi-stage Dockerfile and runs as a non-root user.
 - Docker Desktop with Linux containers
 - Docker Compose
 
+
 ### Configuration
 
-Create a `.env` file in the repository root with:
+Create a local environment file from the provided template:
 
-- `MSSQL_SA_PASSWORD`: Strong SQL Server password.
-- `JWT_KEY`: Base64-encoded random 256-bit key.
-- `DEV_TOKEN_PASSWORD`: Random development credential.
+```powershell
+if (-not (Test-Path .env)) {
+    Copy-Item .env.example .env
+}
+```
 
-The `.env` file is ignored by Git and must never be committed.
+This command preserves any existing `.env` file.
+
+Configure the following variables in `.env`:
+
+| Variable | Description |
+|----------|-------------|
+| `MSSQL_SA_PASSWORD` | Strong SQL Server administrator password |
+| `JWT_KEY` | Cryptographically random 32-byte key encoded as Base64 |
+| `DEV_TOKEN_PASSWORD` | Separate strong credential for development token generation |
+
+To generate a random JWT key using PowerShell:
+
+```powershell
+$bytes = New-Object byte[] 32
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+
+try {
+    $rng.GetBytes($bytes)
+    [Convert]::ToBase64String($bytes)
+}
+finally {
+    $rng.Dispose()
+}
+```
+
+Copy the generated value into `JWT_KEY` in your local `.env` file.
+
+Use unique, strong passwords for the other two variables. SQL Server passwords must meet its password complexity requirements.
+
+**Security notes:**
+
+- `.env` is excluded from Git and must never be committed.
+- `.env.example` contains no real credentials and is safe to share.
+- Do not reuse these development credentials in production.
+- Never publish screenshots showing environment variables or secret values.
+
 
 ### Start the Database
 
@@ -702,3 +746,9 @@ Corporate Automation Lab is a practical software development project designed to
 It focuses on REST API development, relational databases, separation of responsibilities, automated testing, and maintainable code.
 
 The project also serves as a technical portfolio demonstrating modern .NET development practices.
+
+## License
+
+This project is licensed under the MIT License.
+
+See the [LICENSE](LICENSE) file for details.
