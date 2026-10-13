@@ -17,6 +17,8 @@ const elementos = {
 
     tabla: document.getElementById("tasks-table-body"),
     filtro: document.getElementById("status-filter"),
+    filtroPrioridad: document.getElementById("priority-filter"),
+    busqueda: document.getElementById("task-search"),
 
     formulario: document.getElementById("create-task-form"),
     nombre: document.getElementById("task-name"),
@@ -37,6 +39,7 @@ const elementos = {
 let cargaActual = 0;
 let tareaEnEdicion = null;
 let guardandoEdicion = false;
+let temporizadorBusqueda = null;
 
 // Mostrar mensajes al usuario.
 function mostrarMensaje(texto, tipo = "info") {
@@ -85,6 +88,15 @@ function crearEtiqueta(texto, clase) {
     return etiqueta;
 }
 
+// Normalizar texto para buscar sin distinguir tildes
+// ni mayúsculas y minúsculas.
+function normalizarTexto(texto) {
+    return texto
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLocaleLowerCase("es");
+}
+
 // Mostrar las tareas en la tabla.
 function mostrarTareas(tareas) {
     elementos.tabla.replaceChildren();
@@ -93,9 +105,17 @@ function mostrarTareas(tareas) {
         const fila = document.createElement("tr");
         const celda = document.createElement("td");
 
+        const hayFiltros = Boolean(
+            elementos.busqueda.value.trim() ||
+            elementos.filtroPrioridad.value ||
+            elementos.filtro.value
+        );
+
         celda.colSpan = 5;
         celda.className = "empty-state";
-        celda.textContent = "No hay tareas para mostrar.";
+        celda.textContent = hayFiltros
+            ? "No hay tareas que coincidan con los filtros."
+            : "No hay tareas para mostrar.";
 
         fila.appendChild(celda);
         elementos.tabla.appendChild(fila);
@@ -154,7 +174,7 @@ function mostrarTareas(tareas) {
 
         acciones.className = "task-actions";
 
-        // Permitir editar tanto pendientes como completadas.
+        // Editar tareas pendientes y completadas.
         const botonEditar = document.createElement("button");
 
         botonEditar.type = "button";
@@ -240,7 +260,6 @@ async function guardarCambiosTarea(evento) {
     const prioridad = elementos.prioridadEdicion.value;
     const tarea = tareaEnEdicion;
 
-    // Validar el nombre antes de enviarlo.
     if (!nombre || nombre.length > 100) {
         elementos.errorEdicion.textContent =
             "El nombre debe contener entre 1 y 100 caracteres.";
@@ -249,7 +268,6 @@ async function guardarCambiosTarea(evento) {
         return;
     }
 
-    // Validar la prioridad.
     if (!["Baja", "Media", "Alta"].includes(prioridad)) {
         elementos.errorEdicion.textContent =
             "Selecciona una prioridad válida.";
@@ -276,10 +294,8 @@ async function guardarCambiosTarea(evento) {
             })
         });
 
-        // Cerrar la ventana después de guardar.
         elementos.dialogoEdicion.close();
 
-        // Actualizar la tabla y las estadísticas.
         const actualizado = await cargarDashboard();
 
         if (actualizado) {
@@ -296,7 +312,6 @@ async function guardarCambiosTarea(evento) {
     } catch (error) {
         console.error("Error al editar la tarea:", error);
 
-        // Si falla el guardado, mantener la ventana abierta.
         if (elementos.dialogoEdicion.open) {
             elementos.errorEdicion.textContent =
                 "No se pudieron guardar los cambios. Inténtalo de nuevo.";
@@ -362,7 +377,8 @@ async function completarTarea(tarea, boton) {
 }
 
 // Recuperar todas las páginas de tareas.
-async function obtenerTareas(estado) {
+// Estado y prioridad se filtran directamente en SQL Server.
+async function obtenerTareas(estado, prioridad) {
     const tareas = [];
     const tamanoPagina = 100;
 
@@ -376,6 +392,10 @@ async function obtenerTareas(estado) {
 
         if (estado) {
             parametros.set("estado", estado);
+        }
+
+        if (prioridad) {
+            parametros.set("prioridad", prioridad);
         }
 
         const respuesta = await fetch(
@@ -426,19 +446,33 @@ async function cargarDashboard() {
 
     try {
         const estadoSeleccionado = elementos.filtro.value;
+        const prioridadSeleccionada =
+            elementos.filtroPrioridad.value;
+
+        const textoBuscado = normalizarTexto(
+            elementos.busqueda.value.trim()
+        );
 
         const [resumen, tareas] = await Promise.all([
             solicitarJSON(API.resumen),
-            obtenerTareas(estadoSeleccionado)
+            obtenerTareas(estadoSeleccionado, prioridadSeleccionada)
         ]);
 
-        // Ignorar respuestas antiguas si cambia el filtro.
+        // Ignorar respuestas antiguas si los filtros cambiaron.
         if (identificador !== cargaActual) {
             return false;
         }
 
+        // Buscar en todas las tareas devueltas por la API.
+        const tareasFiltradas = textoBuscado
+            ? tareas.filter((tarea) =>
+                normalizarTexto(tarea.nombre).includes(textoBuscado)
+            )
+            : tareas;
+
+        // Las estadísticas generales no dependen de los filtros.
         mostrarEstadisticas(resumen);
-        mostrarTareas(tareas);
+        mostrarTareas(tareasFiltradas);
 
         mostrarMensaje("");
 
@@ -534,6 +568,20 @@ elementos.filtro.addEventListener(
     "change",
     cargarDashboard
 );
+
+elementos.filtroPrioridad.addEventListener(
+    "change",
+    cargarDashboard
+);
+
+// Buscar después de una breve pausa al escribir.
+elementos.busqueda.addEventListener("input", () => {
+    clearTimeout(temporizadorBusqueda);
+
+    temporizadorBusqueda = setTimeout(() => {
+        cargarDashboard();
+    }, 300);
+});
 
 elementos.formulario.addEventListener(
     "submit",

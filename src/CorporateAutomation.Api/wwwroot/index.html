@@ -142,14 +142,53 @@
                         <p>Consulta y seguimiento de actividades</p>
                     </div>
 
-                    <div class="filter-group">
-                        <label for="status-filter">Estado</label>
+                    <!-- Búsqueda y filtros de tareas -->
+                    <div class="task-filters"
+                         role="search"
+                         aria-label="Buscar y filtrar tareas">
 
-                        <select id="status-filter">
-                            <option value="">Todos</option>
-                            <option value="Pendiente">Pendientes</option>
-                            <option value="Completada">Completadas</option>
-                        </select>
+                        <!-- Buscar por nombre -->
+                        <div class="filter-group filter-search">
+                            <label for="task-search">Buscar</label>
+
+                            <input
+                                id="task-search"
+                                type="search"
+                                placeholder="Buscar tarea..."
+                                autocomplete="off">
+                        </div>
+
+                        <!-- Filtrar por prioridad -->
+                        <div class="filter-group">
+                            <label for="priority-filter">
+                                Prioridad
+                            </label>
+
+                            <select id="priority-filter">
+                                <option value="">Todas</option>
+                                <option value="Baja">Baja</option>
+                                <option value="Media">Media</option>
+                                <option value="Alta">Alta</option>
+                            </select>
+                        </div>
+
+                        <!-- Filtrar por estado -->
+                        <div class="filter-group">
+                            <label for="status-filter">
+                                Estado
+                            </label>
+
+                            <select id="status-filter">
+                                <option value="">Todos</option>
+                                <option value="Pendiente">
+                                    Pendientes
+                                </option>
+                                <option value="Completada">
+                                    Completadas
+                                </option>
+                            </select>
+                        </div>
+
                     </div>
 
                 </div>
