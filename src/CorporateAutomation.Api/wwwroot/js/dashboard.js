@@ -23,10 +23,20 @@ const elementos = {
     prioridad: document.getElementById("task-priority"),
 
     actualizar: document.getElementById("refresh-button"),
-    mensaje: document.getElementById("app-message")
+    mensaje: document.getElementById("app-message"),
+
+    dialogoEdicion: document.getElementById("edit-task-dialog"),
+    formularioEdicion: document.getElementById("edit-task-form"),
+    nombreEdicion: document.getElementById("edit-task-name"),
+    prioridadEdicion: document.getElementById("edit-task-priority"),
+    errorEdicion: document.getElementById("edit-task-error"),
+    cancelarEdicion: document.getElementById("edit-cancel-button"),
+    guardarEdicion: document.getElementById("edit-save-button")
 };
 
 let cargaActual = 0;
+let tareaEnEdicion = null;
+let guardandoEdicion = false;
 
 // Mostrar mensajes al usuario.
 function mostrarMensaje(texto, tipo = "info") {
@@ -140,12 +150,36 @@ function mostrarTareas(tareas) {
 
         // Acciones disponibles.
         const celdaAcciones = document.createElement("td");
+        const acciones = document.createElement("div");
 
+        acciones.className = "task-actions";
+
+        // Permitir editar tanto pendientes como completadas.
+        const botonEditar = document.createElement("button");
+
+        botonEditar.type = "button";
+        botonEditar.className =
+            "button button-secondary task-action-button";
+        botonEditar.textContent = "Editar";
+
+        botonEditar.setAttribute(
+            "aria-label",
+            `Editar tarea: ${tarea.nombre}`
+        );
+
+        botonEditar.addEventListener("click", () => {
+            abrirEdicion(tarea);
+        });
+
+        acciones.appendChild(botonEditar);
+
+        // Solo las tareas pendientes pueden completarse.
         if (tarea.estado === "Pendiente") {
             const botonCompletar = document.createElement("button");
 
             botonCompletar.type = "button";
-            botonCompletar.className = "button button-secondary";
+            botonCompletar.className =
+                "button button-secondary task-action-button";
             botonCompletar.textContent = "Completar";
 
             botonCompletar.setAttribute(
@@ -157,10 +191,10 @@ function mostrarTareas(tareas) {
                 completarTarea(tarea, botonCompletar);
             });
 
-            celdaAcciones.appendChild(botonCompletar);
-        } else {
-            celdaAcciones.textContent = "—";
+            acciones.appendChild(botonCompletar);
         }
+
+        celdaAcciones.appendChild(acciones);
 
         fila.append(
             celdaId,
@@ -174,6 +208,110 @@ function mostrarTareas(tareas) {
     }
 
     elementos.tabla.appendChild(fragmento);
+}
+
+// Abrir la ventana de edición con los datos actuales.
+function abrirEdicion(tarea) {
+    if (guardandoEdicion) {
+        return;
+    }
+
+    tareaEnEdicion = tarea;
+
+    elementos.nombreEdicion.value = tarea.nombre;
+    elementos.prioridadEdicion.value = tarea.prioridad;
+    elementos.errorEdicion.textContent = "";
+
+    mostrarMensaje("");
+
+    elementos.dialogoEdicion.showModal();
+    elementos.nombreEdicion.focus();
+}
+
+// Guardar cambios mediante PUT, conservando el estado.
+async function guardarCambiosTarea(evento) {
+    evento.preventDefault();
+
+    if (!tareaEnEdicion || guardandoEdicion) {
+        return;
+    }
+
+    const nombre = elementos.nombreEdicion.value.trim();
+    const prioridad = elementos.prioridadEdicion.value;
+    const tarea = tareaEnEdicion;
+
+    // Validar el nombre antes de enviarlo.
+    if (!nombre || nombre.length > 100) {
+        elementos.errorEdicion.textContent =
+            "El nombre debe contener entre 1 y 100 caracteres.";
+
+        elementos.nombreEdicion.focus();
+        return;
+    }
+
+    // Validar la prioridad.
+    if (!["Baja", "Media", "Alta"].includes(prioridad)) {
+        elementos.errorEdicion.textContent =
+            "Selecciona una prioridad válida.";
+
+        return;
+    }
+
+    guardandoEdicion = true;
+
+    elementos.guardarEdicion.disabled = true;
+    elementos.cancelarEdicion.disabled = true;
+    elementos.errorEdicion.textContent = "";
+
+    try {
+        await solicitarJSON(`${API.tareas}/${tarea.id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                nombre,
+                estado: tarea.estado,
+                prioridad
+            })
+        });
+
+        // Cerrar la ventana después de guardar.
+        elementos.dialogoEdicion.close();
+
+        // Actualizar la tabla y las estadísticas.
+        const actualizado = await cargarDashboard();
+
+        if (actualizado) {
+            mostrarMensaje(
+                "Tarea actualizada correctamente.",
+                "success"
+            );
+        } else {
+            mostrarMensaje(
+                "Los cambios se guardaron, pero no se pudo actualizar el panel.",
+                "error"
+            );
+        }
+    } catch (error) {
+        console.error("Error al editar la tarea:", error);
+
+        // Si falla el guardado, mantener la ventana abierta.
+        if (elementos.dialogoEdicion.open) {
+            elementos.errorEdicion.textContent =
+                "No se pudieron guardar los cambios. Inténtalo de nuevo.";
+        } else {
+            mostrarMensaje(
+                "No se pudo actualizar el panel.",
+                "error"
+            );
+        }
+    } finally {
+        guardandoEdicion = false;
+
+        elementos.guardarEdicion.disabled = false;
+        elementos.cancelarEdicion.disabled = false;
+    }
 }
 
 // Marcar una tarea como completada mediante PUT.
@@ -224,7 +362,6 @@ async function completarTarea(tarea, boton) {
 }
 
 // Recuperar todas las páginas de tareas.
-// La API permite un máximo de 100 tareas por petición.
 async function obtenerTareas(estado) {
     const tareas = [];
     const tamanoPagina = 100;
@@ -329,9 +466,9 @@ async function crearTarea(evento) {
     const nombre = elementos.nombre.value.trim();
     const prioridad = elementos.prioridad.value;
 
-    if (!nombre) {
+    if (!nombre || nombre.length > 100) {
         mostrarMensaje(
-            "Debes introducir el nombre de la tarea.",
+            "El nombre debe contener entre 1 y 100 caracteres.",
             "error"
         );
 
@@ -402,6 +539,32 @@ elementos.formulario.addEventListener(
     "submit",
     crearTarea
 );
+
+// Guardar edición.
+elementos.formularioEdicion.addEventListener(
+    "submit",
+    guardarCambiosTarea
+);
+
+// Cancelar edición.
+elementos.cancelarEdicion.addEventListener("click", () => {
+    if (!guardandoEdicion) {
+        elementos.dialogoEdicion.close();
+    }
+});
+
+// Impedir cerrar la ventana mientras se guardan cambios.
+elementos.dialogoEdicion.addEventListener("cancel", (evento) => {
+    if (guardandoEdicion) {
+        evento.preventDefault();
+    }
+});
+
+// Limpiar la información temporal al cerrar la ventana.
+elementos.dialogoEdicion.addEventListener("close", () => {
+    tareaEnEdicion = null;
+    elementos.errorEdicion.textContent = "";
+});
 
 // Carga inicial.
 cargarDashboard();

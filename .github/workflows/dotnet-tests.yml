@@ -183,6 +183,40 @@ jobs:
               .prioridadAlta == 1
             ' > /dev/null
 
+            # Edit a completed task while preserving its status.
+            curl -fsS \
+              -X PUT "http://127.0.0.1:8080/api/tareas/${task_id}" \
+              -H "Content-Type: application/json" \
+              -d '{"nombre":"Docker task edited","estado":"Completada","prioridad":"Media"}' |
+              jq -e --argjson expected_id "$task_id" '
+                .id == $expected_id and
+                .nombre == "Docker task edited" and
+                .estado == "Completada" and
+                .prioridad == "Media"
+              ' > /dev/null
+
+            # Verify edited data was persisted in SQL Server.
+            curl -fsS \
+              "http://127.0.0.1:8080/api/tareas/${task_id}" |
+              jq -e --argjson expected_id "$task_id" '
+                .id == $expected_id and
+                .nombre == "Docker task edited" and
+                .estado == "Completada" and
+                .prioridad == "Media"
+              ' > /dev/null
+
+            # Verify statistics after changing the task priority.
+            curl -fsS http://127.0.0.1:8080/api/tareas/resumen |
+              jq -e '
+                .total == 1 and
+                .pendientes == 0 and
+                .completadas == 1 and
+                .prioridadBaja == 0 and
+                .prioridadMedia == 1 and
+                .prioridadAlta == 0
+              ' > /dev/null
+
+
       - name: Show container status on failure
         if: failure()
         run: docker compose ps

@@ -205,7 +205,7 @@
                                 id="task-name"
                                 name="nombre"
                                 type="text"
-                                maxlength="200"
+                                maxlength="100"
                                 placeholder="Ej. Revisar servidores"
                                 required>
                         </div>
@@ -253,6 +253,72 @@
         </main>
 
     </div>
+
+    <!-- Ventana para editar tareas -->
+    <dialog id="edit-task-dialog"
+            class="edit-dialog"
+            aria-labelledby="edit-task-title"
+            aria-describedby="edit-task-description">
+
+        <div class="edit-dialog-header">
+            <h2 id="edit-task-title">Editar tarea</h2>
+
+            <p id="edit-task-description">
+                Modifica el nombre o la prioridad de la tarea.
+            </p>
+        </div>
+
+        <form id="edit-task-form">
+
+            <div class="form-field">
+                <label for="edit-task-name">
+                    Nombre de la tarea
+                </label>
+
+                <input
+                    id="edit-task-name"
+                    name="nombre"
+                    type="text"
+                    maxlength="100"
+                    required>
+            </div>
+
+            <div class="form-field">
+                <label for="edit-task-priority">
+                    Prioridad
+                </label>
+
+                <select id="edit-task-priority"
+                        name="prioridad"
+                        required>
+                    <option value="Baja">Baja</option>
+                    <option value="Media">Media</option>
+                    <option value="Alta">Alta</option>
+                </select>
+            </div>
+
+            <p id="edit-task-error"
+               class="edit-task-error"
+               role="alert">
+            </p>
+
+            <div class="form-actions edit-dialog-actions">
+                <button id="edit-cancel-button"
+                        class="button button-secondary"
+                        type="button">
+                    Cancelar
+                </button>
+
+                <button id="edit-save-button"
+                        class="button button-primary"
+                        type="submit">
+                    Guardar cambios
+                </button>
+            </div>
+
+        </form>
+
+    </dialog>
 
 </body>
 </html>

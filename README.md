@@ -47,6 +47,8 @@ The solution includes a console application, an ASP.NET Core Web API, and a resp
 - Responsive web dashboard with task statistics, status filtering, and task creation
 - Complete pending tasks directly from the web dashboard
 - Automatic dashboard refresh after creating or completing tasks
+- Edit task names and priorities directly from the web dashboard
+- Edit pending and completed tasks without changing their status
 
 ## Project Structure
 
@@ -377,6 +379,9 @@ The project includes a responsive web dashboard built with HTML, CSS, and vanill
 - Automatically refresh statistics after task creation or completion
 - Manual data refresh
 - Responsive dark-themed interface
+- Edit existing tasks using a modal dialog
+- Modify task names and priorities while preserving their status
+- Cancel task editing without saving changes
 
 The dashboard connects to the existing REST API and displays data stored in SQL Server.
 
@@ -590,7 +595,7 @@ Run all automated tests:
 dotnet test
 ```
 
-The test suite contains **44 automated tests** covering:
+The test suite contains **46 automated tests** covering:
 
 - Task-management logic
 - API endpoints and CRUD operations
@@ -613,9 +618,12 @@ GitHub Actions automatically validates the project on pull requests and pushes t
 
 The pipeline includes four jobs:
 
-1. **build-and-test:** Restore dependencies, compile the .NET solution, and run 44 automated tests.
+1. **build-and-test:** Restore dependencies, compile the .NET solution, and run 46 automated tests.
 2. **docker-build:** Build the API Docker image.
-3. **docker-integration:** Start SQL Server, apply EF Core migrations, check API health, verify dashboard assets, and test task creation, completion, persistence, and statistics against a real database.
+3. **docker-integration:** Start SQL Server, apply EF Core
+   migrations, check API health, verify dashboard assets,
+   and test task creation, completion, editing, persistence,
+   and statistics against a real database.
 4. **publish-ghcr:** Publish the validated Docker image to GitHub Container Registry.
 
 ### Docker Integration Tests
@@ -632,6 +640,10 @@ The integration workflow verifies:
 - Task completion using HTTP PUT
 - Updated task persistence
 - Updated task statistics after completion
+- Task editing using HTTP PUT
+- Verification that edited task data persists in SQL Server
+- Verification that editing preserves the original task status
+- Updated statistics after changing task priority
 
 The publishing job runs only on successful pushes to `main`, after the three validation jobs have passed.
 
