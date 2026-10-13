@@ -18,6 +18,8 @@ The solution includes a console application and an ASP.NET Core Web API, both sh
 - Git & GitHub
 - GitHub Actions (CI)
 - .NET User Secrets
+- Docker & Docker Compose
+- GitHub Container Registry (GHCR)
 
 ## Features
 
@@ -258,6 +260,31 @@ Once the containers are running, access:
 The services are bound to localhost for local development.
 
 
+### Published Docker Image
+
+The API Docker image is automatically published to
+GitHub Container Registry (GHCR) after successful
+CI validation on the `main` branch.
+
+**Container image:**
+
+`ghcr.io/rafalitri/corporate-automation-lab`
+
+Download the latest published version:
+
+```powershell
+docker pull ghcr.io/rafalitri/corporate-automation-lab:latest
+```
+
+Images are tagged with both `latest` and the Git commit SHA,
+allowing specific builds to be identified and retrieved.
+
+The published image contains the API only. It requires
+a configured database connection and is not a complete
+standalone deployment. For local development, use the
+Docker Compose instructions above.
+
+
 ### Health Checks
 
 The API provides a health check endpoint:
@@ -437,23 +464,41 @@ Run all automated tests:
 dotnet test
 ```
 
-The test suite contains **36 automated tests** covering task-management logic, API endpoints, request validation, filtering, and pagination.
+The test suite contains **38 automated tests** covering task-management logic, API endpoints, request validation, filtering, and pagination.
 
 Integration tests use isolated SQLite in-memory databases instead of the SQL Server development database.
 
 This allows tests to run without requiring SQL Server or local User Secrets.
 
-## Continuous Integration
 
-GitHub Actions automatically performs the following checks:
+## CI/CD Pipeline
 
-1. Restore .NET dependencies.
-2. Build the solution.
-3. Execute the automated tests.
+GitHub Actions automatically validates the project
+on pull requests and pushes to `main`.
 
-The workflow runs on pull requests targeting `main` and pushes to `main`.
+The pipeline includes four jobs:
 
-Build and test status is displayed in the badge at the top of this README.
+1. **build-and-test:** Restore dependencies, compile the
+   .NET solution, and run 38 automated tests.
+2. **docker-build:** Build the API Docker image.
+3. **docker-integration:** Start SQL Server, apply EF Core
+   migrations, check API health, and verify task creation
+   and retrieval against a real database.
+4. **publish-ghcr:** Publish the validated Docker image
+   to GitHub Container Registry.
+
+The publishing job runs only on successful pushes to
+`main`, after the three validation jobs have passed.
+
+Temporary credentials are generated for integration
+tests, and test containers and volumes are removed
+after execution.
+
+The published images are publicly available through
+GitHub Container Registry.
+
+[View GitHub Actions](https://github.com/rafalitri/Corporate-Automation-Lab/actions)
+
 
 ## Purpose
 
