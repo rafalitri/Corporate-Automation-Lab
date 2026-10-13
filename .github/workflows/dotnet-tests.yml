@@ -1,18 +1,17 @@
-
 name: .NET Tests
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
 jobs:
+
   # 1. Compilar .NET y ejecutar las pruebas automatizadas.
+
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -31,10 +30,11 @@ jobs:
         run: dotnet test CorporateAutomation.slnx --configuration Release --no-build
 
   # 2. Comprobar que la imagen Docker se construye correctamente.
+
   docker-build:
     runs-on: ubuntu-latest
-
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -42,11 +42,12 @@ jobs:
         run: docker build -f src/CorporateAutomation.Api/Dockerfile -t corporate-automation-api:ci .
 
   # 3. Probar la API conectada a SQL Server real en Docker.
+
   docker-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -74,11 +75,8 @@ jobs:
         shell: bash
         run: |
           dotnet tool install --global dotnet-ef --version 10.0.12
-
           source .env
-
           export ConnectionStrings__CorporateAutomation="Server=127.0.0.1,14330;Database=CorporateAutomation;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True"
-
           "$HOME/.dotnet/tools/dotnet-ef" database update \
             --project src/CorporateAutomation.Infrastructure \
             --startup-project src/CorporateAutomation.Api
@@ -90,22 +88,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           # Verify API and database health.
           curl -fsS http://127.0.0.1:8080/health | grep -qx Healthy
-
           # Verify that the web dashboard is served by the API.
           curl -fsS http://127.0.0.1:8080/ |
             grep -F 'Dashboard | Corporate Automation Lab' > /dev/null
-
           # Verify that the dashboard CSS is available.
           curl -fsS http://127.0.0.1:8080/css/dashboard.css |
             grep -F -- '--background' > /dev/null
-
           # Verify that the dashboard JavaScript is available.
           curl -fsS http://127.0.0.1:8080/js/dashboard.js |
             grep -F '/api/tareas/resumen' > /dev/null
-
           # Verify initial statistics in an empty database.
           curl -fsS http://127.0.0.1:8080/api/tareas/resumen |
             jq -e '
@@ -116,13 +109,11 @@ jobs:
               .prioridadMedia == 0 and
               .prioridadAlta == 0
             ' > /dev/null
-
           # Create a task in SQL Server.
           response=$(curl -fsS \
             -X POST http://127.0.0.1:8080/api/tareas \
             -H "Content-Type: application/json" \
             -d '{"nombre":"Docker integration test","prioridad":"Alta"}')
-
           echo "$response" |
             jq -e '
               .id > 0 and
@@ -130,16 +121,13 @@ jobs:
               .estado == "Pendiente" and
               .prioridad == "Alta"
             ' > /dev/null
-
           # Save the ID returned by the API.
           task_id=$(echo "$response" | jq -r '.id')
-
           # Verify that the task was persisted.
           curl -fsS http://127.0.0.1:8080/api/tareas |
             jq -e --argjson expected_id "$task_id" '
               any(.[]; .id == $expected_id)
             ' > /dev/null
-
           # Verify statistics before completing the task.
           curl -fsS http://127.0.0.1:8080/api/tareas/resumen |
             jq -e '
@@ -150,7 +138,6 @@ jobs:
               .prioridadMedia == 0 and
               .prioridadAlta == 1
             ' > /dev/null
-
           # Complete the task using HTTP PUT.
           curl -fsS \
             -X PUT "http://127.0.0.1:8080/api/tareas/${task_id}" \
@@ -162,7 +149,6 @@ jobs:
               .estado == "Completada" and
               .prioridad == "Alta"
             ' > /dev/null
-
           # Verify that the completed task was persisted.
           curl -fsS \
             "http://127.0.0.1:8080/api/tareas/${task_id}" |
@@ -171,7 +157,6 @@ jobs:
               .estado == "Completada" and
               .prioridad == "Alta"
             ' > /dev/null
-
           # Verify updated statistics after completing the task.
           curl -fsS http://127.0.0.1:8080/api/tareas/resumen |
             jq -e '
@@ -182,40 +167,60 @@ jobs:
               .prioridadMedia == 0 and
               .prioridadAlta == 1
             ' > /dev/null
-
-            # Edit a completed task while preserving its status.
-            curl -fsS \
-              -X PUT "http://127.0.0.1:8080/api/tareas/${task_id}" \
-              -H "Content-Type: application/json" \
-              -d '{"nombre":"Docker task edited","estado":"Completada","prioridad":"Media"}' |
-              jq -e --argjson expected_id "$task_id" '
-                .id == $expected_id and
-                .nombre == "Docker task edited" and
-                .estado == "Completada" and
-                .prioridad == "Media"
-              ' > /dev/null
-
-            # Verify edited data was persisted in SQL Server.
-            curl -fsS \
-              "http://127.0.0.1:8080/api/tareas/${task_id}" |
-              jq -e --argjson expected_id "$task_id" '
-                .id == $expected_id and
-                .nombre == "Docker task edited" and
-                .estado == "Completada" and
-                .prioridad == "Media"
-              ' > /dev/null
-
-            # Verify statistics after changing the task priority.
-            curl -fsS http://127.0.0.1:8080/api/tareas/resumen |
-              jq -e '
-                .total == 1 and
-                .pendientes == 0 and
-                .completadas == 1 and
-                .prioridadBaja == 0 and
-                .prioridadMedia == 1 and
-                .prioridadAlta == 0
-              ' > /dev/null
-
+          # Edit a completed task while preserving its status.
+          curl -fsS \
+            -X PUT "http://127.0.0.1:8080/api/tareas/${task_id}" \
+            -H "Content-Type: application/json" \
+            -d '{"nombre":"Docker task edited","estado":"Completada","prioridad":"Media"}' |
+            jq -e --argjson expected_id "$task_id" '
+              .id == $expected_id and
+              .nombre == "Docker task edited" and
+              .estado == "Completada" and
+              .prioridad == "Media"
+            ' > /dev/null
+          # Verify edited data was persisted in SQL Server.
+          curl -fsS \
+            "http://127.0.0.1:8080/api/tareas/${task_id}" |
+            jq -e --argjson expected_id "$task_id" '
+              .id == $expected_id and
+              .nombre == "Docker task edited" and
+              .estado == "Completada" and
+              .prioridad == "Media"
+            ' > /dev/null
+          # Verify statistics after changing the task priority.
+          curl -fsS http://127.0.0.1:8080/api/tareas/resumen |
+            jq -e '
+              .total == 1 and
+              .pendientes == 0 and
+              .completadas == 1 and
+              .prioridadBaja == 0 and
+              .prioridadMedia == 1 and
+              .prioridadAlta == 0
+            ' > /dev/null
+          # Verify search and filter controls are present in HTML.
+          dashboard_html=$(curl -fsS http://127.0.0.1:8080/)
+          grep -F 'id="task-search"' <<< "$dashboard_html" > /dev/null
+          grep -F 'id="priority-filter"' <<< "$dashboard_html" > /dev/null
+          grep -F 'id="status-filter"' <<< "$dashboard_html" > /dev/null
+          # Verify the JavaScript includes search and priority filtering.
+          curl -fsS http://127.0.0.1:8080/js/dashboard.js |
+            grep -F 'normalizarTexto' > /dev/null
+          curl -fsS http://127.0.0.1:8080/js/dashboard.js |
+            grep -F 'filtroPrioridad' > /dev/null
+          # Verify combined filters return the completed task.
+          curl -fsS \
+            'http://127.0.0.1:8080/api/tareas?estado=Completada&prioridad=Media' |
+            jq -e --argjson expected_id "$task_id" '
+              length == 1 and
+              .[0].id == $expected_id and
+              .[0].nombre == "Docker task edited" and
+              .[0].estado == "Completada" and
+              .[0].prioridad == "Media"
+            ' > /dev/null
+          # Verify incompatible filters return no results.
+          curl -fsS \
+            'http://127.0.0.1:8080/api/tareas?estado=Pendiente&prioridad=Alta' |
+            jq -e 'length == 0' > /dev/null
 
       - name: Show container status on failure
         if: failure()
@@ -231,24 +236,22 @@ jobs:
           rm -f .env
 
   # 4. Publicar la imagen Docker en GitHub Container Registry.
+
   publish-ghcr:
     name: Publish Docker image to GHCR
     runs-on: ubuntu-latest
-
     # Publicar solo después de superar las tres comprobaciones.
     needs:
       - build-and-test
       - docker-build
       - docker-integration
-
     # Nunca publicar desde un Pull Request.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
     permissions:
       contents: read
       packages: write
-
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 

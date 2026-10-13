@@ -44,9 +44,11 @@ The solution includes a console application, an ASP.NET Core Web API, and a resp
 - JWT signature and expiration validation
 - API and database health checks with Docker monitoring
 - Task statistics endpoint with status and priority aggregation
-- Responsive web dashboard with task statistics, status filtering, and task creation
+- Responsive web dashboard with task statistics and task creation
+- Search tasks by name, ignoring case and accents
+- Combine task search with status and priority filters
 - Complete pending tasks directly from the web dashboard
-- Automatic dashboard refresh after creating or completing tasks
+- Automatic dashboard refresh after creating, editing, or completing tasks
 - Edit task names and priorities directly from the web dashboard
 - Edit pending and completed tasks without changing their status
 
@@ -373,17 +375,35 @@ The project includes a responsive web dashboard built with HTML, CSS, and vanill
 ### Features
 
 - Task statistics by status and priority
-- Task listing with status filtering
+- Task listing with name search and combined status and priority filtering
 - Task creation through the REST API
 - Complete pending tasks using HTTP PUT
-- Automatically refresh statistics after task creation or completion
+- Automatic refresh after task creation, editing, or completion
 - Manual data refresh
 - Responsive dark-themed interface
 - Edit existing tasks using a modal dialog
 - Modify task names and priorities while preserving their status
 - Cancel task editing without saving changes
+- Empty-state messages when no tasks match the selected filters
 
 The dashboard connects to the existing REST API and displays data stored in SQL Server.
+
+### Task Search and Filtering
+
+The dashboard allows users to search for tasks by name and combine multiple filters.
+
+- **Search:** Find tasks by name, ignoring case and accents.
+- **Priority:** Filter tasks by `Baja`, `Media`, or `Alta`.
+- **Status:** Filter tasks by `Pendiente` or `Completada`.
+- **Combined filters:** Apply search, priority, and status filters simultaneously.
+
+Status and priority filtering use the REST API, while name searching is handled in JavaScript.
+
+The dashboard retrieves paginated API results and filters the returned tasks. General statistics remain unchanged when filters are applied.
+
+For example, users can search for tasks containing `backup`, select `Alta` priority, and show only `Pendiente` tasks.
+
+If no tasks match the selected filters, the dashboard displays an informative empty-state message.
 
 ### Task Completion
 
@@ -398,6 +418,21 @@ When a task is completed:
 5. Completed tasks no longer display the Complete button.
 
 The operation preserves the existing task name and priority.
+
+### Task Editing
+
+Tasks can be edited directly from the dashboard.
+
+The editing dialog allows users to:
+
+- Change a task's name
+- Change its priority
+- Save changes using HTTP PUT
+- Cancel editing without saving
+
+Editing preserves the task's existing status, whether it is `Pendiente` or `Completada`.
+
+After saving, the dashboard refreshes the task list and statistics.
 
 ### Run with Docker
 
@@ -419,9 +454,9 @@ The frontend is located in:
 
 Main files:
 
-- `index.html` — Dashboard structure and forms.
+- `index.html` — Dashboard structure, search controls, filters, and forms.
 - `css/dashboard.css` — Responsive styling and layout.
-- `js/dashboard.js` — REST API communication and user interactions.
+- `js/dashboard.js` — REST API communication, filtering, search, and user interactions.
 
 It uses the existing API endpoints and does not require an additional frontend framework or separate web server.
 
@@ -576,7 +611,9 @@ GET /api/tareas?estado=Pendiente&prioridad=Alta&pagina=1&tamanoPagina=10
 
 The response includes an `X-Total-Count` header containing the total number of matching tasks before pagination.
 
-### HTTP Status Codes
+The dashboard uses these API filters together with client-side task name searching.
+
+## HTTP Status Codes
 
 | Status | Description |
 |--------|-------------|
@@ -592,19 +629,24 @@ The response includes an `X-Total-Count` header containing the total number of m
 Run all automated tests:
 
 ```powershell
-dotnet test
+dotnet test CorporateAutomation.slnx --configuration Release
 ```
 
-The test suite contains **46 automated tests** covering:
+The test suite contains **49 automated tests** covering:
 
 - Task-management logic
 - API endpoints and CRUD operations
 - Request validation
 - Filtering and pagination
+- Combined status and priority filters
+- Filtered result counts using `X-Total-Count`
+- Empty results for incompatible filters
+- General statistics remaining unchanged after filtering
 - JWT authentication and token validation
 - Task statistics
 - Dashboard static file delivery
 - Task completion and statistics updates
+- Task editing and status preservation
 
 HTTP integration tests use isolated SQLite in-memory databases instead of the SQL Server development database.
 
@@ -618,12 +660,9 @@ GitHub Actions automatically validates the project on pull requests and pushes t
 
 The pipeline includes four jobs:
 
-1. **build-and-test:** Restore dependencies, compile the .NET solution, and run 46 automated tests.
+1. **build-and-test:** Restore dependencies, compile the .NET solution, and run 49 automated tests.
 2. **docker-build:** Build the API Docker image.
-3. **docker-integration:** Start SQL Server, apply EF Core
-   migrations, check API health, verify dashboard assets,
-   and test task creation, completion, editing, persistence,
-   and statistics against a real database.
+3. **docker-integration:** Start SQL Server, apply EF Core migrations, check API health, verify dashboard assets, and test task creation, completion, editing, persistence, filtering, and statistics against a real database.
 4. **publish-ghcr:** Publish the validated Docker image to GitHub Container Registry.
 
 ### Docker Integration Tests
@@ -634,6 +673,7 @@ The integration workflow verifies:
 - Database migrations
 - API and database health
 - Dashboard HTML, CSS, and JavaScript availability
+- Dashboard search and filter controls availability
 - Initial statistics with an empty database
 - Task creation using HTTP POST
 - Task persistence in SQL Server
@@ -644,6 +684,8 @@ The integration workflow verifies:
 - Verification that edited task data persists in SQL Server
 - Verification that editing preserves the original task status
 - Updated statistics after changing task priority
+- Combined status and priority filtering against SQL Server
+- Empty results for incompatible filter combinations
 
 The publishing job runs only on successful pushes to `main`, after the three validation jobs have passed.
 
