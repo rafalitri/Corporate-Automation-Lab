@@ -106,7 +106,7 @@ jobs:
           curl -fsS http://127.0.0.1:8080/js/dashboard.js |
             grep -F '/api/tareas/resumen' > /dev/null
 
-          # A new database must have zero task statistics.
+          # Verify initial statistics in an empty database.
           curl -fsS http://127.0.0.1:8080/api/tareas/resumen |
             jq -e '
               .total == 0 and
@@ -124,18 +124,60 @@ jobs:
             -d '{"nombre":"Docker integration test","prioridad":"Alta"}')
 
           echo "$response" |
-            jq -e '.id > 0 and .nombre == "Docker integration test"' > /dev/null
+            jq -e '
+              .id > 0 and
+              .nombre == "Docker integration test" and
+              .estado == "Pendiente" and
+              .prioridad == "Alta"
+            ' > /dev/null
+
+          # Save the ID returned by the API.
+          task_id=$(echo "$response" | jq -r '.id')
 
           # Verify that the task was persisted.
           curl -fsS http://127.0.0.1:8080/api/tareas |
-            jq -e 'any(.[]; .nombre == "Docker integration test")' > /dev/null
+            jq -e --argjson expected_id "$task_id" '
+              any(.[]; .id == $expected_id)
+            ' > /dev/null
 
-          # Verify statistics against the real SQL Server database.
+          # Verify statistics before completing the task.
           curl -fsS http://127.0.0.1:8080/api/tareas/resumen |
             jq -e '
               .total == 1 and
               .pendientes == 1 and
               .completadas == 0 and
+              .prioridadBaja == 0 and
+              .prioridadMedia == 0 and
+              .prioridadAlta == 1
+            ' > /dev/null
+
+          # Complete the task using HTTP PUT.
+          curl -fsS \
+            -X PUT "http://127.0.0.1:8080/api/tareas/${task_id}" \
+            -H "Content-Type: application/json" \
+            -d '{"nombre":"Docker integration test","estado":"Completada","prioridad":"Alta"}' |
+            jq -e --argjson expected_id "$task_id" '
+              .id == $expected_id and
+              .nombre == "Docker integration test" and
+              .estado == "Completada" and
+              .prioridad == "Alta"
+            ' > /dev/null
+
+          # Verify that the completed task was persisted.
+          curl -fsS \
+            "http://127.0.0.1:8080/api/tareas/${task_id}" |
+            jq -e --argjson expected_id "$task_id" '
+              .id == $expected_id and
+              .estado == "Completada" and
+              .prioridad == "Alta"
+            ' > /dev/null
+
+          # Verify updated statistics after completing the task.
+          curl -fsS http://127.0.0.1:8080/api/tareas/resumen |
+            jq -e '
+              .total == 1 and
+              .pendientes == 0 and
+              .completadas == 1 and
               .prioridadBaja == 0 and
               .prioridadMedia == 0 and
               .prioridadAlta == 1

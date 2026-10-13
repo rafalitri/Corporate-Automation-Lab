@@ -1,10 +1,11 @@
+
 # Corporate Automation Lab
 
 [![.NET Tests](https://github.com/rafalitri/Corporate-Automation-Lab/actions/workflows/dotnet-tests.yml/badge.svg)](https://github.com/rafalitri/Corporate-Automation-Lab/actions/workflows/dotnet-tests.yml)
 
 A C# and .NET 10 project focused on task management, REST API development, SQL Server persistence, clean architecture principles, and automated testing.
 
-The solution includes a console application and an ASP.NET Core Web API, both sharing reusable domain models and database infrastructure.
+The solution includes a console application, an ASP.NET Core Web API, and a responsive web dashboard.
 
 ## Tech Stack
 
@@ -14,9 +15,10 @@ The solution includes a console application and an ASP.NET Core Web API, both sh
 - Microsoft SQL Server
 - SQLite (in-memory integration tests)
 - xUnit
+- HTML, CSS, and JavaScript
 - Scalar / OpenAPI
 - Git & GitHub
-- GitHub Actions (CI)
+- GitHub Actions (CI/CD)
 - .NET User Secrets
 - Docker & Docker Compose
 - GitHub Container Registry (GHCR)
@@ -43,6 +45,8 @@ The solution includes a console application and an ASP.NET Core Web API, both sh
 - API and database health checks with Docker monitoring
 - Task statistics endpoint with status and priority aggregation
 - Responsive web dashboard with task statistics, status filtering, and task creation
+- Complete pending tasks directly from the web dashboard
+- Automatic dashboard refresh after creating or completing tasks
 
 ## Project Structure
 
@@ -56,9 +60,16 @@ Corporate-Automation-Lab/
 │   ├── CorporateAutomation.Infrastructure/
 │   ├── CorporateAutomation.App/
 │   └── CorporateAutomation.Api/
+│       └── wwwroot/
+│           ├── index.html
+│           ├── css/
+│           │   └── dashboard.css
+│           └── js/
+│               └── dashboard.js
 ├── tests/
 │   └── CorporateAutomation.Tests/
 ├── CorporateAutomation.slnx
+├── compose.yaml
 └── README.md
 ```
 
@@ -70,11 +81,13 @@ Corporate-Automation-Lab/
 
 **CorporateAutomation.App** — Console application for managing tasks.
 
-**CorporateAutomation.Api** — ASP.NET Core REST API with CRUD endpoints, request validation, logging, and Scalar documentation.
+**CorporateAutomation.Api** — ASP.NET Core REST API with CRUD endpoints, request validation, logging, Scalar documentation, and web dashboard.
 
 **CorporateAutomation.Tests** — xUnit unit tests and HTTP integration tests using SQLite in memory.
 
 The console application and REST API share Core and Infrastructure without depending on each other.
+
+The web dashboard communicates with the REST API through HTTP requests.
 
 ## Getting Started
 
@@ -85,6 +98,8 @@ The console application and REST API share Core and Infrastructure without depen
 - Git
 
 The following examples use Windows authentication with a local `.\SQLEXPRESS` SQL Server instance.
+
+Alternatively, the application can be started using Docker Compose without installing SQL Server Express locally.
 
 ### Installation
 
@@ -116,7 +131,9 @@ Replace `.\SQLEXPRESS` if your SQL Server instance has a different name.
 
 These commands are intended for local development with Windows authentication.
 
-`TrustServerCertificate=True` is intended for local development only. User Secrets are stored outside the repository, but they are not encrypted and are not suitable as a production secrets manager.
+`TrustServerCertificate=True` is intended for local development only.
+
+User Secrets are stored outside the repository, but they are not encrypted and are not suitable as a production secrets manager.
 
 ### Database Migrations
 
@@ -160,15 +177,17 @@ API base URL:
 
 `https://localhost:7217/api/tareas`
 
+Dashboard:
+
+`https://localhost:7217/`
 
 ## Docker
 
-The project supports containerized local development using
-Docker and Docker Compose.
+The project supports containerized local development using Docker and Docker Compose.
 
 Docker Compose runs two separate services:
 
-- **API:** ASP.NET Core 10 application running on Linux.
+- **API:** ASP.NET Core 10 application running on Linux, including the web dashboard.
 - **Database:** SQL Server 2022 with persistent storage.
 
 The API uses a multi-stage Dockerfile and runs as a non-root user.
@@ -197,11 +216,9 @@ docker compose ps
 
 Wait until SQL Server reports a healthy status.
 
-
 ### Database Initialization
 
-On first use, apply the existing Entity Framework Core migration
-to the SQL Server container.
+On first use, apply the existing Entity Framework Core migration to the SQL Server container.
 
 Start SQL Server:
 
@@ -209,8 +226,7 @@ Start SQL Server:
 docker compose up -d sqlserver
 ```
 
-In PowerShell, load the SQL Server password from the local
-`.env` file and temporarily configure the database connection:
+In PowerShell, load the SQL Server password from the local `.env` file and temporarily configure the database connection:
 
 ```powershell
 $linea = Get-Content .env |
@@ -239,14 +255,14 @@ finally {
 ```
 
 This requires the .NET SDK and the EF Core CLI tool.
+
 Restore the local tool with `dotnet tool restore` if necessary.
 
-The migration creates the database and its tables in Docker,
-without modifying the local SQL Server Express instance.
+The migration creates the database and its tables in Docker, without modifying the local SQL Server Express instance.
 
-The Docker SQL Server instance is accessible at
-`127.0.0.1,14330`.
+The Docker SQL Server instance is accessible at:
 
+`127.0.0.1,14330`
 
 ### Start the Application
 
@@ -258,16 +274,15 @@ Once the containers are running, access:
 
 - Dashboard: http://localhost:8080/
 - API: http://localhost:8080/api/tareas
+- Task statistics: http://localhost:8080/api/tareas/resumen
 - Scalar: http://localhost:8080/scalar
+- Health check: http://localhost:8080/health
 
 The services are bound to localhost for local development.
 
-
 ### Published Docker Image
 
-The API Docker image is automatically published to
-GitHub Container Registry (GHCR) after successful
-CI validation on the `main` branch.
+The Docker image is automatically published to GitHub Container Registry (GHCR) after successful CI validation on the `main` branch.
 
 **Container image:**
 
@@ -279,14 +294,13 @@ Download the latest published version:
 docker pull ghcr.io/rafalitri/corporate-automation-lab:latest
 ```
 
-Images are tagged with both `latest` and the Git commit SHA,
-allowing specific builds to be identified and retrieved.
+Images are tagged with both `latest` and the Git commit SHA, allowing specific builds to be identified and retrieved.
 
-The published image contains the API only. It requires
-a configured database connection and is not a complete
-standalone deployment. For local development, use the
-Docker Compose instructions above.
+The published image contains the ASP.NET Core API and its bundled web dashboard.
 
+It requires a configured database connection and is not a complete standalone deployment.
+
+For local development, use the Docker Compose instructions above.
 
 ### Health Checks
 
@@ -303,16 +317,15 @@ Expected responses:
 
 Docker Compose monitors both the API and SQL Server.
 
-The API health check runs every 15 seconds and marks the
-container as unhealthy after repeated failures.
+The API health check runs every 15 seconds and marks the container as unhealthy after repeated failures.
 
 Check the container status with:
 
-`docker compose ps`
+```powershell
+docker compose ps
+```
 
-Docker health checks detect problems but do not
-automatically restart unhealthy containers.
-
+Docker health checks detect problems but do not automatically restart unhealthy containers.
 
 ### Persistent Storage
 
@@ -325,46 +338,61 @@ docker compose up -d
 
 The database remains available after recreating the containers.
 
-**Warning:** Running `docker compose down -v` removes
-the database volume and its stored data.
+**Warning:** Running `docker compose down -v` removes the database volume and its stored data.
 
 ### Security
 
 Docker Compose uses the Development environment for local testing.
 
-The development-only JWT token endpoint is not intended for
-public deployment or production authentication.
-```
+The development-only JWT token endpoint is not intended for public deployment or production authentication.
 
+The current dashboard is intended for local development and demonstration rather than deployment as a publicly accessible multi-user application.
 
-### Interactive API Documentation
+## Interactive API Documentation
 
 The project includes Scalar, an interactive OpenAPI interface for exploring and testing REST endpoints.
 
 Start the Web API and open:
 
-**https://localhost:7217/scalar**
+`https://localhost:7217/scalar`
+
+When using Docker:
+
+`http://localhost:8080/scalar`
 
 Scalar is available only in the Development environment.
 
 The API documentation includes endpoint descriptions, request schemas, and expected HTTP response codes.
 
-
 ## Web Dashboard
 
-The project includes a responsive web dashboard built with
-HTML, CSS, and vanilla JavaScript, served directly by ASP.NET Core.
+The project includes a responsive web dashboard built with HTML, CSS, and vanilla JavaScript, served directly by ASP.NET Core.
 
 ### Features
 
-- Real-time task statistics by status and priority
+- Task statistics by status and priority
 - Task listing with status filtering
 - Task creation through the REST API
+- Complete pending tasks using HTTP PUT
+- Automatically refresh statistics after task creation or completion
 - Manual data refresh
 - Responsive dark-themed interface
 
-The dashboard connects to the existing REST API and
-displays data stored in SQL Server.
+The dashboard connects to the existing REST API and displays data stored in SQL Server.
+
+### Task Completion
+
+Pending tasks include a **Complete** action in the dashboard.
+
+When a task is completed:
+
+1. The dashboard sends an HTTP PUT request to the REST API.
+2. The task status changes from `Pendiente` to `Completada`.
+3. The updated task is saved in SQL Server.
+4. The dashboard reloads the task list and statistics.
+5. Completed tasks no longer display the Complete button.
+
+The operation preserves the existing task name and priority.
 
 ### Run with Docker
 
@@ -380,11 +408,17 @@ http://localhost:8080/
 
 ### Implementation
 
-The frontend is located in `src/CorporateAutomation.Api/wwwroot/`.
+The frontend is located in:
 
-It uses the existing API endpoints and does not require
-an additional frontend framework or separate web server.
+`src/CorporateAutomation.Api/wwwroot/`
 
+Main files:
+
+- `index.html` — Dashboard structure and forms.
+- `css/dashboard.css` — Responsive styling and layout.
+- `js/dashboard.js` — REST API communication and user interactions.
+
+It uses the existing API endpoints and does not require an additional frontend framework or separate web server.
 
 ## API Endpoints
 
@@ -393,10 +427,10 @@ an additional frontend framework or separate web server.
 | GET | `/api/tareas` | Retrieve tasks with optional filters and pagination |
 | GET | `/api/tareas/{id}` | Retrieve a task by ID |
 | POST | `/api/tareas` | Create a task |
-| PUT | `/api/tareas/{id}` | Update a task |
-| DELETE | `/api/tareas/{id}` | Delete a task |
+| PUT | `/api/tareas/{id}` | Update a task, including completion |
+| DELETE | `/api/tareas/{id}` | Delete a task (JWT required) |
 | GET | `/api/tareas/resumen` | Retrieve task statistics by status and priority |
-
+| GET | `/health` | Check API and database health |
 
 ### Task Statistics
 
@@ -404,8 +438,7 @@ The API provides an aggregated task summary:
 
 `GET /api/tareas/resumen`
 
-The endpoint returns the total number of tasks, their
-distribution by status, and their distribution by priority.
+The endpoint returns the total number of tasks, their distribution by status, and their distribution by priority.
 
 Example response:
 
@@ -420,47 +453,44 @@ Example response:
 }
 ```
 
-Statistics are calculated using Entity Framework Core
-database queries without loading all tasks into memory.
+Statistics are calculated using Entity Framework Core database queries without loading all tasks into memory.
 
 When no tasks exist, all counters return zero.
-
 
 ### JWT Authentication
 
 The API supports JWT Bearer authentication using HS256.
 
 Currently, the DELETE endpoint requires a valid JWT.
+
 Other task endpoints remain publicly accessible.
 
 JWT validation includes:
+
 - Digital signature verification
 - Issuer and audience validation
 - Token expiration validation
 
-Signing keys and development credentials are stored
-locally using .NET User Secrets.
+Signing keys and development credentials are stored locally using .NET User Secrets.
 
 ### Development Token Generation
 
 For local testing, the API provides:
 
-POST /api/dev/token
+`POST /api/dev/token`
 
-This endpoint is only registered in the Development
-environment and requires a separate development credential
-configured through User Secrets.
+This endpoint is only registered in the Development environment and requires a separate development credential configured through User Secrets.
 
 Generated tokens expire after 15 minutes.
 
 The endpoint is not available in Production.
 
-This is a development-only testing mechanism, not a
-production user login system.
+This is a development-only testing mechanism, not a production user login system.
 
 ### Authentication Tests
 
 Automated integration tests verify:
+
 - Requests without authentication
 - Requests with valid JWTs
 - Expired tokens
@@ -468,7 +498,6 @@ Automated integration tests verify:
 - Incorrect development credentials
 - Successful development token generation
 - Endpoint unavailability in Production
-
 
 ### Example: Create a Task
 
@@ -498,6 +527,33 @@ Supported priorities: `Baja`, `Media`, `Alta`.
 
 Supported task statuses: `Pendiente`, `Completada`.
 
+### Example: Complete a Task
+
+**PUT** `/api/tareas/1`
+
+```json
+{
+  "nombre": "Review system backups",
+  "estado": "Completada",
+  "prioridad": "Alta"
+}
+```
+
+A successful request returns HTTP `200 OK` with the updated task.
+
+Example response:
+
+```json
+{
+  "id": 1,
+  "nombre": "Review system backups",
+  "estado": "Completada",
+  "prioridad": "Alta"
+}
+```
+
+The dashboard uses this endpoint to complete pending tasks.
+
 ### Filtering and Pagination
 
 The GET endpoint supports optional query parameters:
@@ -523,6 +579,7 @@ The response includes an `X-Total-Count` header containing the total number of m
 | 201 Created | Task created successfully |
 | 204 No Content | Task deleted successfully |
 | 400 Bad Request | Invalid request or parameters |
+| 401 Unauthorized | Authentication required |
 | 404 Not Found | Requested task does not exist |
 
 ## Testing
@@ -533,41 +590,56 @@ Run all automated tests:
 dotnet test
 ```
 
-The test suite contains **43 automated tests** covering task-management logic, API endpoints, request validation, filtering, and pagination.
+The test suite contains **44 automated tests** covering:
 
-Integration tests use isolated SQLite in-memory databases instead of the SQL Server development database.
+- Task-management logic
+- API endpoints and CRUD operations
+- Request validation
+- Filtering and pagination
+- JWT authentication and token validation
+- Task statistics
+- Dashboard static file delivery
+- Task completion and statistics updates
 
-This allows tests to run without requiring SQL Server or local User Secrets.
+HTTP integration tests use isolated SQLite in-memory databases instead of the SQL Server development database.
 
+This allows the .NET test suite to run without requiring SQL Server or local User Secrets.
+
+The Docker integration job separately verifies the application against real SQL Server.
 
 ## CI/CD Pipeline
 
-GitHub Actions automatically validates the project
-on pull requests and pushes to `main`.
+GitHub Actions automatically validates the project on pull requests and pushes to `main`.
 
 The pipeline includes four jobs:
 
-1. **build-and-test:** Restore dependencies, compile the
-   .NET solution, and run 43 automated tests.
+1. **build-and-test:** Restore dependencies, compile the .NET solution, and run 44 automated tests.
 2. **docker-build:** Build the API Docker image.
-3. **docker-integration:** Start SQL Server, apply EF Core
-   migrations, check API health, and verify task creation
-   and retrieval against a real database.
-4. **publish-ghcr:** Publish the validated Docker image
-   to GitHub Container Registry.
+3. **docker-integration:** Start SQL Server, apply EF Core migrations, check API health, verify dashboard assets, and test task creation, completion, persistence, and statistics against a real database.
+4. **publish-ghcr:** Publish the validated Docker image to GitHub Container Registry.
 
-The publishing job runs only on successful pushes to
-`main`, after the three validation jobs have passed.
+### Docker Integration Tests
 
-Temporary credentials are generated for integration
-tests, and test containers and volumes are removed
-after execution.
+The integration workflow verifies:
 
-The published images are publicly available through
-GitHub Container Registry.
+- Successful SQL Server startup
+- Database migrations
+- API and database health
+- Dashboard HTML, CSS, and JavaScript availability
+- Initial statistics with an empty database
+- Task creation using HTTP POST
+- Task persistence in SQL Server
+- Task completion using HTTP PUT
+- Updated task persistence
+- Updated task statistics after completion
+
+The publishing job runs only on successful pushes to `main`, after the three validation jobs have passed.
+
+Temporary credentials are generated for integration tests, and test containers and volumes are removed after execution.
+
+The published images are publicly available through GitHub Container Registry.
 
 [View GitHub Actions](https://github.com/rafalitri/Corporate-Automation-Lab/actions)
-
 
 ## Purpose
 
