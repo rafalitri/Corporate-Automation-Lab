@@ -31,7 +31,6 @@ let cargaActual = 0;
 // Mostrar mensajes al usuario.
 function mostrarMensaje(texto, tipo = "info") {
     elementos.mensaje.textContent = texto;
-
     elementos.mensaje.className = "app-message";
 
     if (texto) {
@@ -84,7 +83,7 @@ function mostrarTareas(tareas) {
         const fila = document.createElement("tr");
         const celda = document.createElement("td");
 
-        celda.colSpan = 4;
+        celda.colSpan = 5;
         celda.className = "empty-state";
         celda.textContent = "No hay tareas para mostrar.";
 
@@ -99,12 +98,15 @@ function mostrarTareas(tareas) {
     for (const tarea of tareas) {
         const fila = document.createElement("tr");
 
+        // Identificador.
         const celdaId = document.createElement("td");
         celdaId.textContent = tarea.id;
 
+        // Nombre.
         const celdaNombre = document.createElement("td");
         celdaNombre.textContent = tarea.nombre;
 
+        // Prioridad.
         const celdaPrioridad = document.createElement("td");
 
         const clasesPrioridad = {
@@ -122,6 +124,7 @@ function mostrarTareas(tareas) {
             )
         );
 
+        // Estado.
         const celdaEstado = document.createElement("td");
 
         const claseEstado = tarea.estado === "Completada"
@@ -135,17 +138,89 @@ function mostrarTareas(tareas) {
             )
         );
 
+        // Acciones disponibles.
+        const celdaAcciones = document.createElement("td");
+
+        if (tarea.estado === "Pendiente") {
+            const botonCompletar = document.createElement("button");
+
+            botonCompletar.type = "button";
+            botonCompletar.className = "button button-secondary";
+            botonCompletar.textContent = "Completar";
+
+            botonCompletar.setAttribute(
+                "aria-label",
+                `Completar tarea: ${tarea.nombre}`
+            );
+
+            botonCompletar.addEventListener("click", () => {
+                completarTarea(tarea, botonCompletar);
+            });
+
+            celdaAcciones.appendChild(botonCompletar);
+        } else {
+            celdaAcciones.textContent = "—";
+        }
+
         fila.append(
             celdaId,
             celdaNombre,
             celdaPrioridad,
-            celdaEstado
+            celdaEstado,
+            celdaAcciones
         );
 
         fragmento.appendChild(fila);
     }
 
     elementos.tabla.appendChild(fragmento);
+}
+
+// Marcar una tarea como completada mediante PUT.
+async function completarTarea(tarea, boton) {
+    boton.disabled = true;
+
+    mostrarMensaje(
+        `Completando la tarea "${tarea.nombre}"...`,
+        "info"
+    );
+
+    try {
+        await solicitarJSON(`${API.tareas}/${tarea.id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                nombre: tarea.nombre,
+                estado: "Completada",
+                prioridad: tarea.prioridad
+            })
+        });
+
+        const actualizado = await cargarDashboard();
+
+        if (actualizado) {
+            mostrarMensaje(
+                `Tarea "${tarea.nombre}" completada correctamente.`,
+                "success"
+            );
+        } else {
+            mostrarMensaje(
+                "La tarea se ha completado. Actualiza el panel para consultar su estado.",
+                "info"
+            );
+        }
+    } catch (error) {
+        console.error("Error al completar tarea:", error);
+
+        mostrarMensaje(
+            "No se pudo completar la tarea. Inténtalo de nuevo.",
+            "error"
+        );
+    } finally {
+        boton.disabled = false;
+    }
 }
 
 // Recuperar todas las páginas de tareas.
@@ -220,7 +295,7 @@ async function cargarDashboard() {
             obtenerTareas(estadoSeleccionado)
         ]);
 
-        // Ignorar una respuesta antigua si el filtro cambió.
+        // Ignorar respuestas antiguas si cambia el filtro.
         if (identificador !== cargaActual) {
             return false;
         }

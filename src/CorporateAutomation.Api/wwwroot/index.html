@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <meta name="description"
-          content="Corporate Automation Lab - Panel de gestion de tareas">
+          content="Corporate Automation Lab - Panel de gestión de tareas">
 
     <title>Dashboard | Corporate Automation Lab</title>
 
@@ -18,7 +18,7 @@
 
     <div class="app-layout">
 
-        <!-- Navegacion lateral -->
+        <!-- Navegación lateral -->
         <aside class="sidebar">
 
             <div class="brand">
@@ -30,14 +30,14 @@
                 </div>
             </div>
 
-            <nav class="sidebar-nav" aria-label="Navegacion principal">
+            <nav class="sidebar-nav" aria-label="Navegación principal">
                 <a href="/" class="nav-link active"
                    aria-current="page">
                     Dashboard
                 </a>
 
                 <a href="#tareas" class="nav-link">
-                    Gestion de tareas
+                    Gestión de tareas
                 </a>
 
                 <a href="#nueva-tarea" class="nav-link">
@@ -75,7 +75,7 @@
 
             </header>
 
-            <!-- Estadisticas -->
+            <!-- Estadísticas -->
             <section class="statistics-section"
                      aria-labelledby="statistics-title">
 
@@ -130,7 +130,7 @@
 
             </section>
 
-            <!-- Gestion de tareas -->
+            <!-- Gestión de tareas -->
             <section id="tareas"
                      class="panel tasks-section"
                      aria-labelledby="tasks-title">
@@ -138,7 +138,7 @@
                 <div class="panel-header">
 
                     <div>
-                        <h2 id="tasks-title">Gestion de tareas</h2>
+                        <h2 id="tasks-title">Gestión de tareas</h2>
                         <p>Consulta y seguimiento de actividades</p>
                     </div>
 
@@ -156,22 +156,25 @@
 
                 <div class="table-container">
                     <table>
+
                         <thead>
                             <tr>
                                 <th scope="col">ID</th>
                                 <th scope="col">Tarea</th>
                                 <th scope="col">Prioridad</th>
                                 <th scope="col">Estado</th>
+                                <th scope="col">Acciones</th>
                             </tr>
                         </thead>
 
                         <tbody id="tasks-table-body">
                             <tr>
-                                <td colspan="4" class="empty-state">
+                                <td colspan="5" class="empty-state">
                                     Cargando tareas...
                                 </td>
                             </tr>
                         </tbody>
+
                     </table>
                 </div>
 
