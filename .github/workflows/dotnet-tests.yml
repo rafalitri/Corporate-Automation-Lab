@@ -55,7 +55,6 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      # Necesario para que EF Core encuentre project.assets.json.
       - name: Restore dependencies
         run: dotnet restore CorporateAutomation.slnx
 
@@ -92,8 +91,21 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Verify API and database health.
           curl -fsS http://127.0.0.1:8080/health | grep -qx Healthy
 
+          # A new database must have zero task statistics.
+          curl -fsS http://127.0.0.1:8080/api/tareas/resumen |
+            jq -e '
+              .total == 0 and
+              .pendientes == 0 and
+              .completadas == 0 and
+              .prioridadBaja == 0 and
+              .prioridadMedia == 0 and
+              .prioridadAlta == 0
+            ' > /dev/null
+
+          # Create a task in SQL Server.
           response=$(curl -fsS \
             -X POST http://127.0.0.1:8080/api/tareas \
             -H "Content-Type: application/json" \
@@ -102,8 +114,20 @@ jobs:
           echo "$response" |
             jq -e '.id > 0 and .nombre == "Docker integration test"' > /dev/null
 
+          # Verify that the task was persisted.
           curl -fsS http://127.0.0.1:8080/api/tareas |
             jq -e 'any(.[]; .nombre == "Docker integration test")' > /dev/null
+
+          # Verify statistics against the real SQL Server database.
+          curl -fsS http://127.0.0.1:8080/api/tareas/resumen |
+            jq -e '
+              .total == 1 and
+              .pendientes == 1 and
+              .completadas == 0 and
+              .prioridadBaja == 0 and
+              .prioridadMedia == 0 and
+              .prioridadAlta == 1
+            ' > /dev/null
 
       - name: Show container status on failure
         if: failure()
@@ -117,7 +141,6 @@ jobs:
             docker compose down -v
           fi
           rm -f .env
-
 
   # 4. Publicar la imagen Docker en GitHub Container Registry.
   publish-ghcr:

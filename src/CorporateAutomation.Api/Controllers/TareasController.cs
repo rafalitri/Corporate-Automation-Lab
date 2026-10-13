@@ -1,8 +1,10 @@
-﻿using CorporateAutomation.Core;
+﻿
+using CorporateAutomation.Api.Models;
+using CorporateAutomation.Core;
 using CorporateAutomation.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 
 namespace CorporateAutomation.Api.Controllers;
 
@@ -78,6 +80,34 @@ public class TareasController : ControllerBase
             .ToListAsync(cancellationToken);
 
         return Ok(tareas);
+    }
+
+    // GET: api/tareas/resumen
+    // Obtener estadisticas generales de las tareas.
+    [HttpGet("resumen")]
+    [ProducesResponseType(
+        typeof(ResumenTareasResponse),
+        StatusCodes.Status200OK)]
+    public async Task<ActionResult<ResumenTareasResponse>> GetResumen(
+        CancellationToken cancellationToken)
+    {
+        var resumen = await _db.Tareas
+            .AsNoTracking()
+            .GroupBy(tarea => 1)
+            .Select(grupo => new ResumenTareasResponse(
+                grupo.Count(),
+                grupo.Count(t => t.Estado == EstadoTarea.Pendiente),
+                grupo.Count(t => t.Estado == EstadoTarea.Completada),
+                grupo.Count(t => t.Prioridad == PrioridadTarea.Baja),
+                grupo.Count(t => t.Prioridad == PrioridadTarea.Media),
+                grupo.Count(t => t.Prioridad == PrioridadTarea.Alta)
+            ))
+            .SingleOrDefaultAsync(cancellationToken);
+
+        // Devolver todos los contadores a cero si no hay tareas.
+        return Ok(resumen ?? new ResumenTareasResponse(
+            0, 0, 0, 0, 0, 0
+        ));
     }
 
     // GET: api/tareas/1

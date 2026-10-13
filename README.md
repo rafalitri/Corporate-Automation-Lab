@@ -41,6 +41,7 @@ The solution includes a console application and an ASP.NET Core Web API, both sh
 - JWT Bearer authentication for protected API endpoints
 - JWT signature and expiration validation
 - API and database health checks with Docker monitoring
+- Task statistics endpoint with status and priority aggregation
 
 ## Project Structure
 
@@ -355,6 +356,35 @@ The API documentation includes endpoint descriptions, request schemas, and expec
 | POST | `/api/tareas` | Create a task |
 | PUT | `/api/tareas/{id}` | Update a task |
 | DELETE | `/api/tareas/{id}` | Delete a task |
+| GET | `/api/tareas/resumen` | Retrieve task statistics by status and priority |
+
+
+### Task Statistics
+
+The API provides an aggregated task summary:
+
+`GET /api/tareas/resumen`
+
+The endpoint returns the total number of tasks, their
+distribution by status, and their distribution by priority.
+
+Example response:
+
+```json
+{
+  "total": 5,
+  "pendientes": 3,
+  "completadas": 2,
+  "prioridadBaja": 1,
+  "prioridadMedia": 2,
+  "prioridadAlta": 2
+}
+```
+
+Statistics are calculated using Entity Framework Core
+database queries without loading all tasks into memory.
+
+When no tasks exist, all counters return zero.
 
 
 ### JWT Authentication
@@ -464,7 +494,7 @@ Run all automated tests:
 dotnet test
 ```
 
-The test suite contains **38 automated tests** covering task-management logic, API endpoints, request validation, filtering, and pagination.
+The test suite contains **40 automated tests** covering task-management logic, API endpoints, request validation, filtering, and pagination.
 
 Integration tests use isolated SQLite in-memory databases instead of the SQL Server development database.
 
