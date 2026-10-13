@@ -105,6 +105,9 @@ builder.Services.AddOpenApi(options =>
 var app = builder.Build();
 
 app.UseExceptionHandler();
+// Servir la interfaz web desde wwwroot.
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 
 if (app.Environment.IsDevelopment())

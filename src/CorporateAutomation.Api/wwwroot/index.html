@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description"
+          content="Corporate Automation Lab - Panel de gestion de tareas">
+
+    <title>Dashboard | Corporate Automation Lab</title>
+
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <script src="/js/dashboard.js" defer></script>
+</head>
+
+<body>
+
+    <div class="app-layout">
+
+        <!-- Navegacion lateral -->
+        <aside class="sidebar">
+
+            <div class="brand">
+                <div class="brand-icon">CA</div>
+
+                <div class="brand-text">
+                    <strong>Corporate Automation</strong>
+                    <span>Management Platform</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav" aria-label="Navegacion principal">
+                <a href="/" class="nav-link active"
+                   aria-current="page">
+                    Dashboard
+                </a>
+
+                <a href="#tareas" class="nav-link">
+                    Gestion de tareas
+                </a>
+
+                <a href="#nueva-tarea" class="nav-link">
+                    Nueva tarea
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span class="status-dot"></span>
+                <span>Corporate Automation Lab</span>
+            </div>
+
+        </aside>
+
+        <!-- Contenido principal -->
+        <main class="main-content">
+
+            <!-- Encabezado -->
+            <header class="page-header">
+
+                <div>
+                    <p class="eyebrow">WORKSPACE / OVERVIEW</p>
+                    <h1>Dashboard</h1>
+                    <p class="page-description">
+                        Control y seguimiento de tareas.
+                    </p>
+                </div>
+
+                <button
+                    id="refresh-button"
+                    class="button button-secondary"
+                    type="button">
+                    Actualizar datos
+                </button>
+
+            </header>
+
+            <!-- Estadisticas -->
+            <section class="statistics-section"
+                     aria-labelledby="statistics-title">
+
+                <div class="section-heading">
+                    <h2 id="statistics-title">Resumen general</h2>
+                    <p>Estado actual de las tareas registradas</p>
+                </div>
+
+                <div class="stats-grid">
+
+                    <article class="stat-card">
+                        <span class="stat-label">Total de tareas</span>
+                        <strong id="stat-total" class="stat-value">
+                            —
+                        </strong>
+                        <span class="stat-description">
+                            Tareas registradas
+                        </span>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-label">Pendientes</span>
+                        <strong id="stat-pending" class="stat-value">
+                            —
+                        </strong>
+                        <span class="stat-description">
+                            Por completar
+                        </span>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-label">Completadas</span>
+                        <strong id="stat-completed" class="stat-value">
+                            —
+                        </strong>
+                        <span class="stat-description">
+                            Trabajo finalizado
+                        </span>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-label">Prioridad alta</span>
+                        <strong id="stat-high" class="stat-value">
+                            —
+                        </strong>
+                        <span class="stat-description">
+                            Tareas prioritarias
+                        </span>
+                    </article>
+
+                </div>
+
+            </section>
+
+            <!-- Gestion de tareas -->
+            <section id="tareas"
+                     class="panel tasks-section"
+                     aria-labelledby="tasks-title">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h2 id="tasks-title">Gestion de tareas</h2>
+                        <p>Consulta y seguimiento de actividades</p>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="status-filter">Estado</label>
+
+                        <select id="status-filter">
+                            <option value="">Todos</option>
+                            <option value="Pendiente">Pendientes</option>
+                            <option value="Completada">Completadas</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Tarea</th>
+                                <th scope="col">Prioridad</th>
+                                <th scope="col">Estado</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="tasks-table-body">
+                            <tr>
+                                <td colspan="4" class="empty-state">
+                                    Cargando tareas...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
+
+            <!-- Nueva tarea -->
+            <section id="nueva-tarea"
+                     class="panel create-section"
+                     aria-labelledby="create-title">
+
+                <div class="panel-header">
+                    <div>
+                        <h2 id="create-title">Nueva tarea</h2>
+                        <p>Registra una nueva actividad</p>
+                    </div>
+                </div>
+
+                <form id="create-task-form">
+
+                    <div class="form-grid">
+
+                        <div class="form-field">
+                            <label for="task-name">
+                                Nombre de la tarea
+                            </label>
+
+                            <input
+                                id="task-name"
+                                name="nombre"
+                                type="text"
+                                maxlength="200"
+                                placeholder="Ej. Revisar servidores"
+                                required>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="task-priority">
+                                Prioridad
+                            </label>
+
+                            <select id="task-priority"
+                                    name="prioridad"
+                                    required>
+                                <option value="Baja">Baja</option>
+                                <option value="Media" selected>
+                                    Media
+                                </option>
+                                <option value="Alta">Alta</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="button button-primary"
+                                type="submit">
+                            Crear tarea
+                        </button>
+                    </div>
+
+                </form>
+
+            </section>
+
+            <!-- Mensajes de estado -->
+            <p id="app-message"
+               class="app-message"
+               role="status"
+               aria-live="polite">
+            </p>
+
+            <footer class="page-footer">
+                Corporate Automation Lab · ASP.NET Core 10
+            </footer>
+
+        </main>
+
+    </div>
+
+</body>
+</html>
