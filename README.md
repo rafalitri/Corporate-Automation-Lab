@@ -42,6 +42,7 @@ The solution includes a console application and an ASP.NET Core Web API, both sh
 - JWT signature and expiration validation
 - API and database health checks with Docker monitoring
 - Task statistics endpoint with status and priority aggregation
+- Responsive web dashboard with task statistics, status filtering, and task creation
 
 ## Project Structure
 
@@ -255,6 +256,7 @@ docker compose up -d --build
 
 Once the containers are running, access:
 
+- Dashboard: http://localhost:8080/
 - API: http://localhost:8080/api/tareas
 - Scalar: http://localhost:8080/scalar
 
@@ -346,6 +348,43 @@ Start the Web API and open:
 Scalar is available only in the Development environment.
 
 The API documentation includes endpoint descriptions, request schemas, and expected HTTP response codes.
+
+
+## Web Dashboard
+
+The project includes a responsive web dashboard built with
+HTML, CSS, and vanilla JavaScript, served directly by ASP.NET Core.
+
+### Features
+
+- Real-time task statistics by status and priority
+- Task listing with status filtering
+- Task creation through the REST API
+- Manual data refresh
+- Responsive dark-themed interface
+
+The dashboard connects to the existing REST API and
+displays data stored in SQL Server.
+
+### Run with Docker
+
+Start the application:
+
+```powershell
+docker compose up -d --build
+```
+
+Open the dashboard:
+
+http://localhost:8080/
+
+### Implementation
+
+The frontend is located in `src/CorporateAutomation.Api/wwwroot/`.
+
+It uses the existing API endpoints and does not require
+an additional frontend framework or separate web server.
+
 
 ## API Endpoints
 
@@ -494,7 +533,7 @@ Run all automated tests:
 dotnet test
 ```
 
-The test suite contains **40 automated tests** covering task-management logic, API endpoints, request validation, filtering, and pagination.
+The test suite contains **43 automated tests** covering task-management logic, API endpoints, request validation, filtering, and pagination.
 
 Integration tests use isolated SQLite in-memory databases instead of the SQL Server development database.
 
@@ -509,7 +548,7 @@ on pull requests and pushes to `main`.
 The pipeline includes four jobs:
 
 1. **build-and-test:** Restore dependencies, compile the
-   .NET solution, and run 38 automated tests.
+   .NET solution, and run 43 automated tests.
 2. **docker-build:** Build the API Docker image.
 3. **docker-integration:** Start SQL Server, apply EF Core
    migrations, check API health, and verify task creation

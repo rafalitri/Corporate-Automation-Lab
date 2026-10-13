@@ -94,6 +94,18 @@ jobs:
           # Verify API and database health.
           curl -fsS http://127.0.0.1:8080/health | grep -qx Healthy
 
+          # Verify that the web dashboard is served by the API.
+          curl -fsS http://127.0.0.1:8080/ |
+            grep -F 'Dashboard | Corporate Automation Lab' > /dev/null
+
+          # Verify that the dashboard CSS is available.
+          curl -fsS http://127.0.0.1:8080/css/dashboard.css |
+            grep -F -- '--background' > /dev/null
+
+          # Verify that the dashboard JavaScript is available.
+          curl -fsS http://127.0.0.1:8080/js/dashboard.js |
+            grep -F '/api/tareas/resumen' > /dev/null
+
           # A new database must have zero task statistics.
           curl -fsS http://127.0.0.1:8080/api/tareas/resumen |
             jq -e '
