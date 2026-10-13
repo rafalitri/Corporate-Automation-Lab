@@ -55,6 +55,10 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # Necesario para que EF Core encuentre project.assets.json.
+      - name: Restore dependencies
+        run: dotnet restore CorporateAutomation.slnx
+
       - name: Generate temporary test credentials
         shell: bash
         run: |
@@ -86,6 +90,8 @@ jobs:
       - name: Verify API and database integration
         shell: bash
         run: |
+          set -euo pipefail
+
           curl -fsS http://127.0.0.1:8080/health | grep -qx Healthy
 
           response=$(curl -fsS \
@@ -105,6 +111,9 @@ jobs:
 
       - name: Clean up test containers
         if: always()
+        shell: bash
         run: |
-          docker compose down -v
+          if [ -f .env ]; then
+            docker compose down -v
+          fi
           rm -f .env
